@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: crms_backend
+
+server:
+  port: 54321
+  address: 0.0.0.0
