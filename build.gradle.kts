@@ -30,10 +30,7 @@ dependencies {
         implementation("mysql:mysql-connector-java:8.0.28")
         implementation("org.springframework.boot:spring-boot-starter-data-jpa")
         implementation("org.hibernate.orm:hibernate-core:6.3.1.Final")
-        implementation("io.jsonwebtoken:jjwt:0.9.1") // For JWT (optional)
-        // implementation("org.springframework.boot:spring-boot-starter-security")
-        implementation("javax.xml.bind:jaxb-api:2.3.1")
-        implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
+
     }
 
 }

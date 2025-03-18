@@ -7,12 +7,17 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.springframework.stereotype.Service
 import java.util.*
+import org.springframework.beans.factory.annotation.Value
+
+import jakarta.servlet.http.HttpServletRequest
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @Service
 class UserService(private val userRepository: UserRepository) {
-
-    private val secretKey = "yourSecretKey"
-
+    @Value("\${security.jwt.secret}")
+    lateinit var secretKey: String
     fun login(request: LoginRequest): LoginResponse {
         val user = userRepository.findByCNAAndPassword(request.CNA, request.password)
             ?: throw IllegalArgumentException("Invalid CNA or password")
@@ -20,7 +25,7 @@ class UserService(private val userRepository: UserRepository) {
         // Generate tokens
         val token = generateToken(user.CNA, user.accessLevel)
         val refreshToken = generateRefreshToken(user.CNA)
-
+       /* val ipAddress = request.getHeader("X-Forwarded-For") ?: request.remoteAddr*/
         // Update user last login details (optional logic)
         // updateLastLogin(user.CNA, request.ip)
 
