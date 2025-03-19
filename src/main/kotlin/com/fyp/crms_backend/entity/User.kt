@@ -13,7 +13,11 @@ data class User(
     var lastName: String = "",
     var contentNo: String = "",
     var campusID: Int = 0,
+    var campusShortName: String = "",
+    var campusName: String = "",
+    var CardID: String = "",
     var lastLoginTime: LocalDateTime? = null,
     var lastLoginIP: String? = null,
-    var loginFail: Int = 0
+    var loginFail: Int = 0,
+    var UserLog: String = "",
 )

@@ -4,5 +4,8 @@ import java.time.LocalDateTime
 
 class Device (
     var lastLoginTime: LocalDateTime? = null,
-    var lastLoginIP: String? = null
+    var lastLoginIP: String? = null,
+    var deviceID: String = "",
+    var deviceName: String = "",
+
     )
