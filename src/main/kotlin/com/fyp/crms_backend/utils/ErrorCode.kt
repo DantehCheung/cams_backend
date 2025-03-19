@@ -1,0 +1,22 @@
+package com.fyp.crms_backend.utils
+
+enum class ErrorCode(val description: String) {
+    E("wtf"),
+    E01("Argument Missing"),
+    E02("Argument Wrong"),
+    E03("No Permission"),
+    E04("Token Expired"),
+    E05("Database Connection Error"),
+    E06("Query Error");
+
+    // Optional: Function to return the error code as JSON-like output
+    fun toJson(): String {
+        return """{ "errorCode": "$name", "description": "$description" }"""
+    }
+
+    companion object {
+        fun toErrorCode(code: String): ErrorCode {
+            return values().find { it.name == code } ?: E // Default to E if not found
+        }
+    }
+}

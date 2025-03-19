@@ -7,5 +7,6 @@ import org.springframework.boot.runApplication
 class CrmsBackendApplication
 
 fun main(args: Array<String>) {
+
     runApplication<CrmsBackendApplication>(*args)
 }
