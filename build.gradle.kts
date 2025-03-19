@@ -20,6 +20,8 @@ repositories {
 
 dependencies {
     dependencies {
+       // implementation("org.projectlombok:lombok")
+        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
         implementation("org.springframework.boot:spring-boot-starter-data-redis")
         implementation("org.springframework.boot:spring-boot-starter-web")
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -28,8 +30,8 @@ dependencies {
         runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
         runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
         implementation("mysql:mysql-connector-java:8.0.28")
-        implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-        implementation("org.hibernate.orm:hibernate-core:6.3.1.Final")
+       // implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+      //  implementation("org.hibernate.orm:hibernate-core:6.3.1.Final") STOPs
 
     }
 

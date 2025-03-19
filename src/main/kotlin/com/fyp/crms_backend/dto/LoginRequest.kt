@@ -1,7 +1,6 @@
-package com.fyp.crms_backend
+package com.fyp.crms_backend.dto
 
 data class LoginRequest(
     val CNA: String,
-    val password: String,
-    val ip: String
+    val password: String
 )

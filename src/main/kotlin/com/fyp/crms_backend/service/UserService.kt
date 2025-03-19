@@ -1,6 +1,6 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.LoginRequest
+import com.fyp.crms_backend.dto.LoginRequest
 import com.fyp.crms_backend.dto.LoginResponse
 import com.fyp.crms_backend.repository.UserRepository
 import io.jsonwebtoken.Jwts
@@ -9,25 +9,20 @@ import org.springframework.stereotype.Service
 import java.util.*
 import org.springframework.beans.factory.annotation.Value
 
-import jakarta.servlet.http.HttpServletRequest
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+
 
 @Service
 class UserService(private val userRepository: UserRepository) {
+
     @Value("\${security.jwt.secret}")
-    lateinit var secretKey: String
-    fun login(request: LoginRequest): LoginResponse {
-        val user = userRepository.findByCNAAndPassword(request.CNA, request.password)
+    lateinit var secretKey:String
+
+    fun login(request: LoginRequest, ipAddress: String): LoginResponse {
+        val user = userRepository.findByCNAAndPassword(request.CNA, request.password,ipAddress)
             ?: throw IllegalArgumentException("Invalid CNA or password")
 
-        // Generate tokens
         val token = generateToken(user.CNA, user.accessLevel)
         val refreshToken = generateRefreshToken(user.CNA)
-       /* val ipAddress = request.getHeader("X-Forwarded-For") ?: request.remoteAddr*/
-        // Update user last login details (optional logic)
-        // updateLastLogin(user.CNA, request.ip)
 
         return LoginResponse(
             token = token,
@@ -35,7 +30,8 @@ class UserService(private val userRepository: UserRepository) {
             accessLevel = user.accessLevel,
             accessPage = user.accessPage,
             firstName = user.firstName,
-            lastName = user.lastName
+            lastName = user.lastName,
+            lastLoginIp = user.lastLoginIP ?: ""
         )
     }
 
@@ -58,3 +54,5 @@ class UserService(private val userRepository: UserRepository) {
             .compact()
     }
 }
+
+

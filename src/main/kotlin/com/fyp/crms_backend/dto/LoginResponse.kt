@@ -6,5 +6,6 @@ data class LoginResponse(
     val accessLevel: Int,
     val accessPage: Int,
     val firstName: String,
-    val lastName: String
+    val lastName: String,
+    val lastLoginIp: String
 )
