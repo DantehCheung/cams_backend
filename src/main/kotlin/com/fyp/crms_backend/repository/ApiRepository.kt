@@ -4,7 +4,7 @@ import com.fyp.crms_backend.utils.ErrorCode
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.dao.DataAccessException
 
-class ApiRepository(private val jdbcTemplate: JdbcTemplate) {
+open class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
 
     // Check if the token is valid
     private fun checkToken(token: String): Boolean {

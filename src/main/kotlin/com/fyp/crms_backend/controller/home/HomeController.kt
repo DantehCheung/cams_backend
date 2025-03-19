@@ -10,11 +10,8 @@ import jakarta.servlet.http.HttpServletRequest
 @RequestMapping("/api")
 class HomeController(private val userService: UserService){
 
-    @PostMapping("/home")
-    fun GetHome(@RequestBody request: HomeRequest,httpRequest: HttpServletRequest): HomeResponse {
-
-        val ipAddress = httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr
-        println(ipAddress)
-        return userService.login(request,ipAddress)
-    }
+//    @PostMapping("/home")
+//    fun GetHome(@RequestBody request: HomeRequest,httpRequest: HttpServletRequest): HomeResponse {
+//        re
+//    }
 }

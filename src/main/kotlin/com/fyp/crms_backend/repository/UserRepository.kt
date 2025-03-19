@@ -1,6 +1,6 @@
 package com.fyp.crms_backend.repository
 
-import com.fyp.crms_backend.entity.User
+import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.stereotype.Repository
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -8,8 +8,8 @@ import org.springframework.jdbc.core.RowMapper
 
 @Repository
 class UserRepository(private val jdbcTemplate: JdbcTemplate){
-    private val rowMapper = RowMapper<User> {
-        rs, _ -> User(
+    private val rowMapper = RowMapper<CAMSDB.User> {
+        rs, _ -> CAMSDB.User(
         CNA = rs.getString("CNA"),
         emailDomain = rs.getString("emailDomain"),
         salt = rs.getString("salt"),
@@ -26,16 +26,16 @@ class UserRepository(private val jdbcTemplate: JdbcTemplate){
         )
     }
 
-    fun findByCNAAndPassword(CNA: String, password: String, ipAddress: String): User? {
+    fun findByCNAAndPassword(CNA: String, password: String,ipAddress:String): CAMSDB.User? {
         val user = jdbcTemplate.query(
             """
             SELECT * 
             FROM user 
             WHERE CNA = ? 
-              AND password = '00117bcee0fef4a07a693800b9546bb8540bc80b9e76a2853a1017ddafcb7506c'
+              AND password = CONCAT('0', SHA2(CONCAT(?, (SELECT salt FROM user WHERE CNA = ?)), 256))
             """,
             rowMapper,
-            CNA
+            CNA, password,CNA
         )
         if (user.isNotEmpty()) {
             jdbcTemplate.update(
