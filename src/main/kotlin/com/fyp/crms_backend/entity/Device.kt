@@ -2,7 +2,7 @@ package com.fyp.crms_backend.entity
 
 import java.time.LocalDateTime
 
-class Home (
+class Device (
     var lastLoginTime: LocalDateTime? = null,
     var lastLoginIP: String? = null
     )
