@@ -1,21 +1,38 @@
 package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.utils.ErrorCode
-import org.springframework.jdbc.core.JdbcTemplate
+import com.fyp.crms_backend.utils.JWT
+import io.jsonwebtoken.Claims
 import org.springframework.dao.DataAccessException
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.RowMapper
 
-open class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
+
+abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate, private val jwt: JWT) {
+
+    protected var CNA: String = ""
 
     // Check if the token is valid
     private fun checkToken(token: String): Boolean {
         // Simulate token verification logic
-        return token.isNotEmpty() && token == "valid_token" // Replace with actual token verification logic
+        return if (token.isNotEmpty()) {
+            val data: Claims = jwt.decrypteToken(token)
+            CNA = data.subject
+            println("ApiRepository - checkToken")
+            println("Subject: ${data.subject}")
+            println("Access Level: ${data["accessLevel"]}")
+            println("Issued At: ${data.issuedAt}")
+            println("Expiration: ${data.expiration}")
+            true
+        } else {
+            false
+        }
     }
 
     // Check if the arguments are valid
-    private fun checkArg(args: Array<out Any>): Boolean {
+    private fun checkArg(args: Array<out Any?>): Boolean {
         // Example: Ensure no argument is null
-        return args.isNotEmpty() && args.all { it != null }
+        return args.isNotEmpty() && args.all { arg -> arg != null }
     }
 
     private fun checkPermissions():Boolean{
@@ -25,7 +42,7 @@ open class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
     // Add a log entry to the database
     private fun addLog(CNA: String, log: String): Boolean {
         return try {
-            val sql = "INSERT INTO logs (DT,userCNA, log) VALUES (NOW(), ?, ?)"
+            val sql = "INSERT INTO log (DT,userCNA, log) VALUES (NOW(), ?, ?)"
             jdbcTemplate.update(sql, CNA, log)
             true
         } catch (e: DataAccessException) {
@@ -40,9 +57,10 @@ open class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
     // Process API request
     fun APIprocess(
         token: String,
-        main: (args: Array<out Any>) -> String,
-        args: Array<out Any>
-    ): String {
+        args: Array<out Any?>,
+        log: String,
+        main: (args: Array<out Any?>) -> Any?
+    ): Any? {
         return try {
             // Step 1: Check token validity
             if (!checkToken(token)) {
@@ -58,8 +76,17 @@ open class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
             val result = main(args)
 
             // Step 4: Add log on success
-            val CNA = args.getOrNull(0) as? String ?: return errorProcess("E02")
-            val logAdded = addLog(CNA, "Operation successful: $result")
+            val logAdded = addLog(
+                CNA, "successful: $log with ${
+                    args.joinToString { arg ->
+                        when (arg) {
+                            is RowMapper<*> -> "RowMapper instance"
+                            else -> arg?.toString() ?: "null"
+                        }
+                    }
+                }"
+            )
+
             if (!logAdded) {
                 return errorProcess("E05") // Database connection or query error
             }
@@ -68,7 +95,15 @@ open class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
             return result
         } catch (e: Exception) {
             // Generic error handler (e.g., unexpected exceptions)
+            val logAdded = addLog(CNA, "fail: $log with $args")
+            if (!logAdded) {
+                return errorProcess("E05") // Database connection or query error
+            }
             errorProcess("E06")
         }
+    }
+
+    override fun toString(): String {
+        return "Repository: ${super.toString()}"
     }
 }

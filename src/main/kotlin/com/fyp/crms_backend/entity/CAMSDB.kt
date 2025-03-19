@@ -20,97 +20,97 @@ data class CAMSDB(
     val logs: List<Log>
 ) {
     data class User(
-        val CNA: String,
-        val emailDomain: String,
-        val salt: String,
-        val password: String,
-        val accessLevel: Int = 10000,
-        val accessPage: Int = 0,
-        val firstName: String = "",
-        val lastName: String = "",
-        val contentNo: String,
-        val campusID: Int,
-        val lastLoginTime: LocalDateTime? = LocalDateTime.now(),
-        val lastLoginIP: String? = null,
-        val loginFail: Int = 0
+        val CNA: String? = null,
+        val emailDomain: String? = null,
+        val salt: String? = null,
+        val password: String? = null,
+        val accessLevel: Int? = 10000,
+        val accessPage: Int? = 0,
+        val firstName: String? = "",
+        val lastName: String? = "",
+        val contentNo: String? = null,
+        val campusID: Int? = null,
+        val lastLoginTime: LocalDateTime?? = null,
+        val lastLoginIP: String?? = null,
+        val loginFail: Int? = null
     )
 
     data class UserCard(
-        val cardID: String,
-        val CNA: String
+        val cardID: String? = null,
+        val CNA: String? = null
     )
 
     data class Campus(
-        val campusID: Int = 0,
-        val campusShortName: String,
-        val campusName: String
+        val campusID: Int? = null,
+        val campusShortName: String? = null,
+        val campusName: String? = null
     )
 
     data class Room(
-        val roomID: Int = 0,
-        val campusID: Int,
-        val roomNumber: String,
-        val roomName: String = ""
+        val roomID: Int? = 0,
+        val campusID: Int? = null,
+        val roomNumber: String? = null,
+        val roomName: String? = null
     )
 
     data class RoomRFID(
-        val roomID: Int,
-        val RFID: String
+        val roomID: Int? = null,
+        val RFID: String? = null
     )
 
     data class Device(
-        val deviceID: Int = 0,
-        val deviceName: String,
-        val price: BigDecimal,
-        val orderDate: LocalDate,
-        val arriveDate: LocalDate? = null,
-        val maintenanceDate: LocalDate? = null,
-        val roomID: Int,
-        val state: Char,
-        val remark: String = ""
+        val deviceID: Int? = 0,
+        val deviceName: String? = null,
+        val price: BigDecimal? = null,
+        val orderDate: LocalDate? = null,
+        val arriveDate: LocalDate?? = null,
+        val maintenanceDate: LocalDate?? = null,
+        val roomID: Int? = null,
+        val state: Char? = null,
+        val remark: String? = null
     )
 
     data class DeviceDoc(
-        val deviceID: Int,
-        val docPath: String
+        val deviceID: Int? = null,
+        val docPath: String? = null
     )
 
     data class DevicePartID(
-        val deviceID: Int,
-        val devicePartID: Int,
-        val devicePartName: String
+        val deviceID: Int? = null,
+        val devicePartID: Int? = null,
+        val devicePartName: String? = null
     )
 
     data class DeviceRFID(
-        val deviceID: Int,
-        val devicePartID: Int,
-        val RFID: String
+        val deviceID: Int? = null,
+        val devicePartID: Int? = null,
+        val RFID: String? = null
     )
 
     data class DeviceBorrowRecord(
-        val borrowRecordID: Int = 0,
-        val borrowDate: LocalDate = LocalDate.now(),
-        val deviceID: Int,
-        val borrowUserCNA: String,
-        val leasePeriod: LocalDate = LocalDate.now().plusDays(14)
+        val borrowRecordID: Int? = 0,
+        val borrowDate: LocalDate? = null,
+        val deviceID: Int? = null,
+        val borrowUserCNA: String? = null,
+        val leasePeriod: LocalDate? = null
     )
 
     data class DeviceReturnRecord(
-        val borrowRecordID: Int,
-        val returnDate: LocalDate = LocalDate.now(),
+        val borrowRecordID: Int? = null,
+        val returnDate: LocalDate? = null,
         val checkRecordID: Int? = null
     )
 
     data class CheckDeviceReturnRecord(
-        val checkRecordID: Int = 0,
-        val checkDT: LocalDateTime,
-        val inspector: String
+        val checkRecordID: Int? = null,
+        val checkDT: LocalDateTime? = null,
+        val inspector: String? = null
     )
 
     data class Log(
-        val DT: LocalDateTime = LocalDateTime.now(),
-        val userCNA: String,
-        val log: String
+        val DT: LocalDateTime? = null,
+        val userCNA: String? = null,
+        val log: String? = null
     )
 }
 

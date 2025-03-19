@@ -1,9 +1,9 @@
 package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.entity.CAMSDB
-import org.springframework.stereotype.Repository
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
+import org.springframework.stereotype.Repository
 
 
 @Repository
@@ -49,6 +49,6 @@ class UserRepository(private val jdbcTemplate: JdbcTemplate){
             )
         }
 
-        return if (user.isEmpty()) null else user[0]
+        return user.firstOrNull()
     }
 }

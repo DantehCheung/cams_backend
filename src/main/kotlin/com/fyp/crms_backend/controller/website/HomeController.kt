@@ -1,0 +1,20 @@
+package com.fyp.crms_backend.controller.website
+
+import com.fyp.crms_backend.dto.HomeRequest
+import com.fyp.crms_backend.dto.HomeResponse
+import com.fyp.crms_backend.service.HomeService
+import jakarta.servlet.http.HttpServletRequest
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/api")
+class HomeController(private val homeService: HomeService) {
+
+    @PostMapping("/home")
+    fun GetHome(@RequestBody request: HomeRequest, httpRequest: HttpServletRequest): HomeResponse {
+        return homeService.execute(request)
+    }
+}
