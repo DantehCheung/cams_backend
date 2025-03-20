@@ -1,14 +1,14 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.dto.LoginRequest
-import com.fyp.crms_backend.dto.LoginResponse
+import com.fyp.crms_backend.dto.login.LoginRequest
+import com.fyp.crms_backend.dto.login.LoginResponse
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
 import org.springframework.stereotype.Service
 
 
 @Service
-class UserService(private val userRepository: UserRepository, private val jwt: JWT) {
+class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiService(jwt) {
 
 
     fun login(request: LoginRequest, ipAddress: String): LoginResponse {

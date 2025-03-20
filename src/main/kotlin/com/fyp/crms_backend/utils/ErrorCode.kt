@@ -9,8 +9,7 @@ enum class ErrorCode(val description: String) {
     E05("Database Connection Error"),
     E06("Query Error");
 
-    // Optional: Function to return the error code as JSON-like output
-    fun toJson(): String {
+    override fun toString(): String {
         return """{ "errorCode": "$name", "description": "$description" }"""
     }
 

@@ -1,4 +1,6 @@
-package com.fyp.crms_backend.dto
+package com.fyp.crms_backend.dto.login
+
+import com.fyp.crms_backend.dto.Response
 
 data class LoginResponse(
     val token: String,
@@ -8,4 +10,4 @@ data class LoginResponse(
     val firstName: String,
     val lastName: String,
     val lastLoginIp: String
-)
+) : Response

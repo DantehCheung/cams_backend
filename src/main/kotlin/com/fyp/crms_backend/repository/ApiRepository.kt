@@ -1,38 +1,18 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.exception.ErrorCodeException
 import com.fyp.crms_backend.utils.ErrorCode
-import com.fyp.crms_backend.utils.JWT
-import io.jsonwebtoken.Claims
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.RowMapper
 
 
-abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate, private val jwt: JWT) {
+abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
 
-    protected var CNA: String = ""
-
-    // Check if the token is valid
-    private fun checkToken(token: String): Boolean {
-        // Simulate token verification logic
-        return if (token.isNotEmpty()) {
-            val data: Claims = jwt.decrypteToken(token)
-            CNA = data.subject
-            println("ApiRepository - checkToken")
-            println("Subject: ${data.subject}")
-            println("Access Level: ${data["accessLevel"]}")
-            println("Issued At: ${data.issuedAt}")
-            println("Expiration: ${data.expiration}")
-            true
-        } else {
-            false
-        }
-    }
 
     // Check if the arguments are valid
     private fun checkArg(args: Array<out Any?>): Boolean {
         // Example: Ensure no argument is null
-        return args.isNotEmpty() && args.all { arg -> arg != null }
+        return args.all { arg -> arg != null }
     }
 
     private fun checkPermissions():Boolean{
@@ -50,26 +30,25 @@ abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate, private v
         }
     }
 
-    private fun errorProcess(code:String):String{
-        return ErrorCode.toErrorCode(code).toJson()
+    private fun errorProcess(code: String): ErrorCode {
+        throw ErrorCodeException(ErrorCode.toErrorCode(code))
     }
 
-    // Process API request
+
     fun APIprocess(
-        token: String,
-        args: Array<out Any?>,
-        log: String,
+        CNA: String,
+        args: Array<out Any?> = arrayOf(),
+        logMsg: String,
         main: (args: Array<out Any?>) -> Any?
     ): Any? {
         return try {
-            // Step 1: Check token validity
-            if (!checkToken(token)) {
-                return errorProcess("E04")
-            }
-
             // Step 2: Check argument validity
             if (!checkArg(args)) {
-                return errorProcess("E01") // Arguments missing or invalid
+                errorProcess("E01") // Arguments missing or invalid
+            }
+
+            if (!checkPermissions()) {
+                errorProcess("E03")
             }
 
             // Step 3: Execute the main process
@@ -77,33 +56,37 @@ abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate, private v
 
             // Step 4: Add log on success
             val logAdded = addLog(
-                CNA, "successful: $log with ${
-                    args.joinToString { arg ->
-                        when (arg) {
-                            is RowMapper<*> -> "RowMapper instance"
-                            else -> arg?.toString() ?: "null"
-                        }
-                    }
-                }"
+                CNA, "successful: $logMsg"
             )
 
+
+
             if (!logAdded) {
-                return errorProcess("E05") // Database connection or query error
+                errorProcess("E05") // Database connection or query error
             }
 
             // Step 5: Return the result
             return result
+        } catch (e: ErrorCodeException) {
+            throw e
         } catch (e: Exception) {
             // Generic error handler (e.g., unexpected exceptions)
-            val logAdded = addLog(CNA, "fail: $log with $args")
+            val logAdded = addLog(CNA, "fail: $logMsg with (${e.message})")
+//            ${args.joinToString { arg ->
+//                when (arg) {
+//                    is RowMapper<*> -> "RowMapper instance"
+//                    else -> arg?.toString() ?: "null:${arg!!::class.simpleName}"
+//                }
+//            }
+//            }
             if (!logAdded) {
-                return errorProcess("E05") // Database connection or query error
+                errorProcess("E05") // Database connection or query error
             }
             errorProcess("E06")
         }
     }
 
     override fun toString(): String {
-        return "Repository: ${super.toString()}"
+        return "${super.toString()}: Repository"
     }
 }

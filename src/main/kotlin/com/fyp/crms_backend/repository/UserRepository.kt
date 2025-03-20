@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 @Repository
-class UserRepository(private val jdbcTemplate: JdbcTemplate){
+class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     private val rowMapper = RowMapper<CAMSDB.User> {
         rs, _ -> CAMSDB.User(
         CNA = rs.getString("CNA"),
@@ -27,28 +27,29 @@ class UserRepository(private val jdbcTemplate: JdbcTemplate){
     }
 
     fun findByCNAAndPassword(CNA: String, password: String,ipAddress:String): CAMSDB.User? {
-        val user = jdbcTemplate.query(
-            """
-            SELECT * 
+        return super.APIprocess(CNA, arrayOf(), "login by pw") {
+            val user = jdbcTemplate.query(
+                """SELECT * 
             FROM user 
             WHERE CNA = ? 
               AND password = CONCAT('0', SHA2(CONCAT(?, (SELECT salt FROM user WHERE CNA = ?)), 256))
             """,
-            rowMapper,
-            CNA, password,CNA
-        )
-        if (user.isNotEmpty()) {
+                rowMapper,
+                CNA, password, CNA
+            )
             jdbcTemplate.update(
-                """
-            UPDATE user
+                """UPDATE user
             SET lastLoginIP = ?
             WHERE CNA = ?
             """,
                 ipAddress,
                 CNA
             )
-        }
 
-        return user.firstOrNull()
+
+            return@APIprocess user.firstOrNull()
+        } as CAMSDB.User?
+
+
     }
 }

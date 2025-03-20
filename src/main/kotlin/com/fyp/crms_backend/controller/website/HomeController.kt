@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.controller.website
 
-import com.fyp.crms_backend.dto.HomeRequest
-import com.fyp.crms_backend.dto.HomeResponse
+import com.fyp.crms_backend.dto.home.HomeRequest
+import com.fyp.crms_backend.dto.home.HomeResponse
 import com.fyp.crms_backend.service.HomeService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.PostMapping

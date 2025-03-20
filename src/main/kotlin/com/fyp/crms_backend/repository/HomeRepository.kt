@@ -1,14 +1,13 @@
 package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.entity.CAMSDB
-import com.fyp.crms_backend.utils.JWT
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
 
 
 @Repository
-class HomeRepository(jdbcTemplate: JdbcTemplate, jwt: JWT) : ApiRepository(jdbcTemplate, jwt) {
+class HomeRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     private val rowMapper = RowMapper<CAMSDB.User> { rs, _ ->
         CAMSDB.User(
             lastLoginTime = rs.getTimestamp("lastLoginTime")?.toLocalDateTime(),
@@ -16,22 +15,18 @@ class HomeRepository(jdbcTemplate: JdbcTemplate, jwt: JWT) : ApiRepository(jdbcT
         )
     }
 
-    fun fetchData(token: String): CAMSDB.User? {
-        try {
-            val sql: String = """SELECT lastLoginTime, lastLoginIP FROM user WHERE CNA = ? """
-            return super.APIprocess(token, arrayOf(rowMapper, sql), "get Home Data") {
+    fun fetchData(CNA: String): CAMSDB.User? {
+
+        return super.APIprocess(CNA, arrayOf(), "get Home Data") {
                 val result: List<CAMSDB.User> = jdbcTemplate.query(
-                    sql,
+                    """SELECT lastLoginTime, lastLoginIP FROM user WHERE CNA = ? """,
                     rowMapper,
                     CNA
                 )
 
                 return@APIprocess result.firstOrNull()
-            } as? CAMSDB.User?
-        } catch (e: Exception) {
-            println("Error while processing token: ${e.message}")
-            return null
-        }
+        } as CAMSDB.User?
+
     }
 
 
