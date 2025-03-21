@@ -4,9 +4,10 @@ import com.fyp.crms_backend.exception.ErrorCodeException
 import com.fyp.crms_backend.utils.ErrorCode
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.RowMapper
 
 
-abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
+abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
 
     // Check if the arguments are valid
@@ -71,14 +72,56 @@ abstract class ApiRepository(protected val jdbcTemplate: JdbcTemplate) {
             throw e
         } catch (e: Exception) {
             // Generic error handler (e.g., unexpected exceptions)
+            val logAdded = addLog(
+                CNA, "fail: $logMsg with (${e.message})\n${
+                    args.joinToString { arg ->
+                        when (arg) {
+                            is RowMapper<*> -> "RowMapper instance"
+                            else -> arg?.toString() ?: "null:${arg!!::class.simpleName}"
+                        }
+                    }
+                }")
+
+            if (!logAdded) {
+                errorProcess("E05") // Database connection or query error
+            }
+            errorProcess("E06")
+        }
+    }
+
+    fun APIprocess(
+        CNA: String,
+        logMsg: String,
+        main: () -> Any?
+    ): Any? {
+        return try {
+
+            if (!checkPermissions()) {
+                errorProcess("E03")
+            }
+
+            // Step 3: Execute the main process
+            val result = main()
+
+            // Step 4: Add log on success
+            val logAdded = addLog(
+                CNA, "successful: $logMsg"
+            )
+
+
+
+            if (!logAdded) {
+                errorProcess("E05") // Database connection or query error
+            }
+
+            // Step 5: Return the result
+            return result
+        } catch (e: ErrorCodeException) {
+            throw e
+        } catch (e: Exception) {
+            // Generic error handler (e.g., unexpected exceptions)
             val logAdded = addLog(CNA, "fail: $logMsg with (${e.message})")
-//            ${args.joinToString { arg ->
-//                when (arg) {
-//                    is RowMapper<*> -> "RowMapper instance"
-//                    else -> arg?.toString() ?: "null:${arg!!::class.simpleName}"
-//                }
-//            }
-//            }
+
             if (!logAdded) {
                 errorProcess("E05") // Database connection or query error
             }

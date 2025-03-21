@@ -17,7 +17,7 @@ class HomeRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
 
     fun fetchData(CNA: String): CAMSDB.User? {
 
-        return super.APIprocess(CNA, arrayOf(), "get Home Data") {
+        return super.APIprocess(CNA, "get Home Data") {
                 val result: List<CAMSDB.User> = jdbcTemplate.query(
                     """SELECT lastLoginTime, lastLoginIP FROM user WHERE CNA = ? """,
                     rowMapper,

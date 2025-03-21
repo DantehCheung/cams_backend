@@ -5,19 +5,19 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class CAMSDB(
-    val users: List<User>,
-    val userCards: List<UserCard>,
-    val campuses: List<Campus>,
-    val rooms: List<Room>,
-    val roomRFIDs: List<RoomRFID>,
-    val devices: List<Device>,
-    val deviceDocs: List<DeviceDoc>,
-    val devicePartIDs: List<DevicePartID>,
-    val deviceRFIDs: List<DeviceRFID>,
-    val deviceBorrowRecords: List<DeviceBorrowRecord>,
-    val deviceReturnRecords: List<DeviceReturnRecord>,
-    val checkDeviceReturnRecords: List<CheckDeviceReturnRecord>,
-    val logs: List<Log>
+    val users: List<User>? = null,
+    val userCards: List<UserCard>? = null,
+    val campuses: List<Campus>? = null,
+    val rooms: List<Room>? = null,
+    val roomRFIDs: List<RoomRFID>? = null,
+    val devices: List<Device>? = null,
+    val deviceDocs: List<DeviceDoc>? = null,
+    val devicePartIDs: List<DevicePartID>? = null,
+    val deviceRFIDs: List<DeviceRFID>? = null,
+    val deviceBorrowRecords: List<DeviceBorrowRecord>? = null,
+    val deviceReturnRecords: List<DeviceReturnRecord>? = null,
+    val checkDeviceReturnRecords: List<CheckDeviceReturnRecord>? = null,
+    val logs: List<Log>? = null
 ) {
     data class User(
         val CNA: String? = null,

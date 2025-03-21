@@ -27,7 +27,7 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     }
 
     fun findByCNAAndPassword(CNA: String, password: String,ipAddress:String): CAMSDB.User? {
-        return super.APIprocess(CNA, arrayOf(), "login by pw") {
+        return super.APIprocess(CNA, "login by pw") {
             val user = jdbcTemplate.query(
                 """SELECT * 
             FROM user 

@@ -15,7 +15,7 @@ enum class ErrorCode(val description: String) {
 
     companion object {
         fun toErrorCode(code: String): ErrorCode {
-            return values().find { it.name == code } ?: E // Default to E if not found
+            return entries.find { it.name == code } ?: E // Default to E if not found
         }
     }
 }
