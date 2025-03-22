@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.dto.login.LoginRequest
-import com.fyp.crms_backend.dto.login.LoginResponse
+import com.fyp.crms_backend.dto.login.LoginByPwRequest
+import com.fyp.crms_backend.dto.login.LoginByPwResponse
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
 import org.springframework.stereotype.Service
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiService(jwt) {
 
 
-    fun login(request: LoginRequest, ipAddress: String): LoginResponse {
+    fun login(request: LoginByPwRequest, ipAddress: String): LoginByPwResponse {
         val user = userRepository.findByCNAAndPassword(request.CNA, request.password,ipAddress)
             ?: throw IllegalArgumentException("Invalid CNA or password")
 
@@ -19,7 +19,7 @@ class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiSer
         val token = jwt.generateToken(user.CNA!!, user.accessLevel!!)
         val refreshToken = jwt.generateRefreshToken(user.CNA!!)
 
-        return LoginResponse(
+        return LoginByPwResponse(
             token = token,
             refreshToken = refreshToken,
             accessLevel = user.accessLevel!!,

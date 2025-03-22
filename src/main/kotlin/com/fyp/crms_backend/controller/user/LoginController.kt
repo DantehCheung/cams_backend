@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.controller.user
 
-import com.fyp.crms_backend.dto.login.LoginRequest
-import com.fyp.crms_backend.dto.login.LoginResponse
+import com.fyp.crms_backend.dto.login.LoginByPwRequest
+import com.fyp.crms_backend.dto.login.LoginByPwResponse
 import com.fyp.crms_backend.service.UserService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.PostMapping
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 class LoginController(private val userService: UserService) {
 
     @PostMapping("/loginbypw")
-    fun login(@RequestBody request: LoginRequest, httpRequest: HttpServletRequest): LoginResponse {
+    fun login(@RequestBody request: LoginByPwRequest, httpRequest: HttpServletRequest): LoginByPwResponse {
         val ipAddress = httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr
         return userService.login(request,ipAddress)
     }

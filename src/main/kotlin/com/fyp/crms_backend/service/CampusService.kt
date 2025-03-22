@@ -18,14 +18,17 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
         val repo = campusRepository.fetchData(data.subject)
             ?: throw IllegalArgumentException("No campus data found for the user")
 
+        val c: List<GetCampusResponse.Campus> = repo.map { campus ->
+            GetCampusResponse.Campus(
+                campusId = campus.campusID,
+                campusShortName = campus.campusShortName,
+                campusName = campus.campusName
+            )
+        }
 
 
         return GetCampusResponse(
-            campusId = repo.campusID!!,
-            campusShortName = repo.campusShortName!!,
-            campusName = repo.campusName!!
-
-
+            c =  c
         )
     }
 

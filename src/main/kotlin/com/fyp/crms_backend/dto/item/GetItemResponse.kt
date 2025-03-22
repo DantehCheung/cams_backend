@@ -4,7 +4,7 @@ import com.fyp.crms_backend.dto.Response
 import java.math.BigDecimal
 import java.time.LocalDate
 
-data class ItemResponse(
+data class GetItemResponse(
     val deviceID: Int,
     val deviceName: String,
     val price: BigDecimal,

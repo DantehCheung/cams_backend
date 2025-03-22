@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.controller.item
 
-import com.fyp.crms_backend.dto.item.ItemRequest
-import com.fyp.crms_backend.dto.item.ItemResponse
+import com.fyp.crms_backend.dto.item.GetItemRequest
+import com.fyp.crms_backend.dto.item.GetItemResponse
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class ItemController(private val itemService: ItemService) {
 
-    @PostMapping("/getitem")
-    fun GetCampus(
-        @RequestBody request: ItemRequest
-    ): ItemResponse {
+    @PostMapping("/getitems")
+    fun getItems(
+        @RequestBody request: GetItemRequest
+    ): GetItemResponse {
         return itemService.execute(request)
     }
 }

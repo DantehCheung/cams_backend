@@ -16,17 +16,34 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         )
     }
 
-    fun fetchData(CNA: String): CAMSDB.Campus {
+    private val rowMapper1 = RowMapper<CAMSDB.User> { rs, _ ->
+        CAMSDB.User(
+            accessLevel = rs.getInt("accessLevel"),
+        )
+    }
+
+    fun fetchData(CNA: String): List<CAMSDB.Campus> {
 
         return super.APIprocess(CNA, "get Campus Data") {
-            val result: List<CAMSDB.Campus> = jdbcTemplate.query(
-                """select campus.campusID,campusShortName,campusName from User, campus where User.campusID = campus.campusID and CNA = ? """,
-                rowMapper,
+            val result1 = jdbcTemplate.query(
+                """SELECT accessLevel FROM user where CNA = ?""",
+                rowMapper1,
                 CNA
             )
+            val accessLevel:Int = result1.firstOrNull()?.accessLevel!!
 
-            return@APIprocess result.firstOrNull()
-        } as CAMSDB.Campus
+            val result: List<CAMSDB.Campus> = if (accessLevel > 100) {
+                jdbcTemplate.query("""SELECT campus.campusID, campusShortName, campusName 
+             FROM user 
+             JOIN campus ON user.campusID = campus.campusID 
+             WHERE CNA = ?""", rowMapper, CNA)
+            } else {
+                jdbcTemplate.query("""SELECT * FROM cams.campus""", rowMapper)
+            }
+
+
+            return@APIprocess result
+        } as List<CAMSDB.Campus>
 
     }
 

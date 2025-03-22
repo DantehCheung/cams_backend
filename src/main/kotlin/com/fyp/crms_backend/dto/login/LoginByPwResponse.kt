@@ -2,7 +2,7 @@ package com.fyp.crms_backend.dto.login
 
 import com.fyp.crms_backend.dto.Response
 
-data class LoginResponse(
+data class LoginByPwResponse(
     val token: String,
     val refreshToken: String,
     val accessLevel: Int,
