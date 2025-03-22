@@ -30,5 +30,32 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
 
     }
 
+    fun addData(campusShortName: String, campusName: String): String {
+        // Check for existing record
+        val count = jdbcTemplate.queryForObject(
+            """
+        SELECT COUNT(*) FROM campus
+        WHERE campusShortName = ? OR campusName = ?
+        """.trimIndent(),
+            Int::class.java,
+            campusShortName,
+            campusName
+        ) ?: 0
+
+        return if (count > 0) {
+            "Campus already exists"
+        } else {
+            val rows = jdbcTemplate.update(
+                """
+            INSERT INTO campus(campusShortName, campusName)
+            VALUES (?, ?)
+            """.trimIndent(),
+                campusShortName,
+                campusName
+            )
+            if (rows > 0) "Inserted successfully" else "No rows inserted"
+        }
+    }
+
 
 }
