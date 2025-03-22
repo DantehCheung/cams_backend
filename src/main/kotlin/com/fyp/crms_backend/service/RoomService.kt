@@ -2,7 +2,6 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.dto.room.GetRoomRequest
 import com.fyp.crms_backend.dto.room.GetRoomResponse
-import com.fyp.crms_backend.dto.room.SingleRoomResponse
 import com.fyp.crms_backend.repository.RoomRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -17,7 +16,7 @@ class RoomService(private val roomRepository: RoomRepository, jwt: JWT) : ApiSer
         val Rooms = roomRepository.fetchData(data.subject, request.campusID.toString())
 
         val Room = Rooms.map { room ->
-            SingleRoomResponse(
+            GetRoomResponse.SingleRoomResponse(
                 room = room.roomID!!,
                 campusId = room.campusID!!,
                 roomNumber = room.roomNumber!!,
