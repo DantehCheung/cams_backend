@@ -1,5 +1,8 @@
 package com.fyp.crms_backend.controller.campus
 
+
+import com.fyp.crms_backend.dto.campus.CampusAddRequest
+import com.fyp.crms_backend.dto.campus.CampusAddResponse
 import com.fyp.crms_backend.dto.campus.GetCampusRequest
 import com.fyp.crms_backend.dto.campus.GetCampusResponse
 import com.fyp.crms_backend.service.CampusService
@@ -18,5 +21,12 @@ class CampusController(private val campusService: CampusService) {
         @RequestBody request: GetCampusRequest
     ): GetCampusResponse {
         return campusService.execute(request)
+    }
+
+    @PostMapping("/addcampus")
+    fun AddCampus(
+        @RequestBody request: CampusAddRequest
+    ) : CampusAddResponse {
+        return campusService.add(request)
     }
 }
