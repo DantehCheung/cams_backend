@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class HomeController(private val homeService: HomeService) {
 
-    @PostMapping("/home")
-    fun GetHome(@RequestBody request: HomeRequest, httpRequest: HttpServletRequest): HomeResponse {
+    @PostMapping("/gethome")
+    fun GetHome(@RequestBody request: HomeRequest): HomeResponse {
         return homeService.execute(request)
     }
 }

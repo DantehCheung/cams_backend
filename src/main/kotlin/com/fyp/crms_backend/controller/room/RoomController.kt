@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.controller.room
 
-import com.fyp.crms_backend.dto.room.RoomRequest
-import com.fyp.crms_backend.dto.room.RoomResponse
+import com.fyp.crms_backend.dto.room.GetRoomRequest
+import com.fyp.crms_backend.dto.room.GetRoomResponse
 import com.fyp.crms_backend.service.RoomService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class RoomController(private val roomService: RoomService) {
 
-    @PostMapping("/rooms")
-    fun getRooms(@RequestBody request: RoomRequest): RoomResponse {
+    @PostMapping("/getrooms")
+    fun getRooms(@RequestBody request: GetRoomRequest): GetRoomResponse {
         return roomService.execute(request)
     }
 }
