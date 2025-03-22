@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.dto.campus.CampusRequest
-import com.fyp.crms_backend.dto.campus.CampusResponse
+import com.fyp.crms_backend.dto.campus.GetCampusRequest
+import com.fyp.crms_backend.dto.campus.GetCampusResponse
 import com.fyp.crms_backend.repository.CampusRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 @Service
 class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : ApiService(jwt) {
 
-    fun execute(request: CampusRequest): CampusResponse {
+    fun execute(request: GetCampusRequest): GetCampusResponse {
 
         val data: Claims = decryptToken(request.token)
 
@@ -20,7 +20,7 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
 
 
 
-        return CampusResponse(
+        return GetCampusResponse(
             campusId = repo.campusID!!,
             campusShortName = repo.campusShortName!!,
             campusName = repo.campusName!!

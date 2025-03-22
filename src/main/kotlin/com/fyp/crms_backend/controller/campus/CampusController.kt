@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.controller.campus
 
-import com.fyp.crms_backend.dto.campus.CampusRequest
-import com.fyp.crms_backend.dto.campus.CampusResponse
+import com.fyp.crms_backend.dto.campus.GetCampusRequest
+import com.fyp.crms_backend.dto.campus.GetCampusResponse
 import com.fyp.crms_backend.service.CampusService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.PostMapping
@@ -13,11 +13,10 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class CampusController(private val campusService: CampusService) {
 
-    @PostMapping("/campus")
-    fun GetCampus(
-        @RequestBody request: CampusRequest,
-        httpRequest: HttpServletRequest
-    ): CampusResponse {
+    @PostMapping("/getcampus")
+    fun getCampus(
+        @RequestBody request: GetCampusRequest
+    ): GetCampusResponse {
         return campusService.execute(request)
     }
 }
