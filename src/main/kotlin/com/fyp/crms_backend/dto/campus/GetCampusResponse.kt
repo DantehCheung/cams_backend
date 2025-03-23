@@ -1,7 +1,6 @@
 package com.fyp.crms_backend.dto.campus
 
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.entity.CAMSDB
 
 data class GetCampusResponse(
     val c: List<Campus>

@@ -7,7 +7,8 @@ enum class ErrorCode(val description: String) {
     E03("No Permission"),
     E04("Token Expired"),
     E05("Database Connection Error"),
-    E06("Query Error");
+    E06("Query Error"),
+    E07("User Not Found"), ;
 
     override fun toString(): String {
         return """{ "errorCode": "$name", "description": "$description" }"""

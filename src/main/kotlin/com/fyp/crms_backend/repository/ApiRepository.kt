@@ -31,8 +31,8 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
         }
     }
 
-    private fun errorProcess(code: String): ErrorCode {
-        throw ErrorCodeException(ErrorCode.toErrorCode(code))
+    fun errorProcess(code: String): ErrorCodeException {
+        return ErrorCodeException(ErrorCode.toErrorCode(code))
     }
 
 
@@ -45,11 +45,11 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
         return try {
             // Step 2: Check argument validity
             if (!checkArg(args)) {
-                errorProcess("E01") // Arguments missing or invalid
+                throw errorProcess("E01") // Arguments missing or invalid
             }
 
             if (!checkPermissions()) {
-                errorProcess("E03")
+                throw errorProcess("E03")
             }
 
             // Step 3: Execute the main process
@@ -63,7 +63,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
 
             if (!logAdded) {
-                errorProcess("E05") // Database connection or query error
+                throw errorProcess("E05") // Database connection or query error
             }
 
             // Step 5: Return the result
@@ -83,9 +83,9 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
                 }")
 
             if (!logAdded) {
-                errorProcess("E05") // Database connection or query error
+                throw errorProcess("E05") // Database connection or query error
             }
-            errorProcess("E06")
+            throw errorProcess("E06")
         }
     }
 
@@ -97,7 +97,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
         return try {
 
             if (!checkPermissions()) {
-                errorProcess("E03")
+                throw errorProcess("E03")
             }
 
             // Step 3: Execute the main process
@@ -111,7 +111,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
 
             if (!logAdded) {
-                errorProcess("E05") // Database connection or query error
+                throw errorProcess("E05") // Database connection or query error
             }
 
             // Step 5: Return the result
@@ -123,9 +123,9 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
             val logAdded = addLog(CNA, "fail: $logMsg with (${e.message})")
 
             if (!logAdded) {
-                errorProcess("E05") // Database connection or query error
+                throw errorProcess("E05") // Database connection or query error
             }
-            errorProcess("E06")
+            throw errorProcess("E06")
         }
     }
 

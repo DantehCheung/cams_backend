@@ -1,9 +1,11 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.dto.login.LoginByPwRequest
-import com.fyp.crms_backend.dto.login.LoginByPwResponse
+import com.fyp.crms_backend.dto.Request
+import com.fyp.crms_backend.dto.login.*
+import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
+import io.jsonwebtoken.Claims
 import org.springframework.stereotype.Service
 
 
@@ -11,15 +13,23 @@ import org.springframework.stereotype.Service
 class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiService(jwt) {
 
 
-    fun login(request: LoginByPwRequest, ipAddress: String): LoginByPwResponse {
-        val user = userRepository.findByCNAAndPassword(request.CNA, request.password,ipAddress)
-            ?: throw IllegalArgumentException("Invalid CNA or password")
+    fun login(request: Request, ipAddress: String): LoginResponse {
+        var user: CAMSDB.User? = null
+        if (request is LoginByPwRequest) {
+            user = userRepository.findByCNAAndPassword(request.CNA, request.password, ipAddress)
+                ?: throw IllegalArgumentException("Invalid CNA or password")
+        } else if (request is LoginByCardRequest) {
+            user = userRepository.findByCard(request.CardID, ipAddress)
+                ?: throw IllegalArgumentException("Invalid Card ID")
+        } else {
+            throw IllegalArgumentException("Invalid credentials")
+        }
 
 
-        val token = jwt.generateToken(user.CNA!!, user.accessLevel!!)
-        val refreshToken = jwt.generateRefreshToken(user.CNA!!)
+        val token = jwt.generateToken(user)
+        val refreshToken = jwt.generateRefreshToken(user)
 
-        return LoginByPwResponse(
+        return LoginResponse(
             token = token,
             refreshToken = refreshToken,
             accessLevel = user.accessLevel!!,
@@ -28,8 +38,19 @@ class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiSer
             lastName = user.lastName!!,
             lastLoginIp = user.lastLoginIP ?: ""
         )
+
+
     }
 
+    fun renew(request: Request, ipAddress: String): RenewTokenResponse {
+
+        val data: Claims = decryptToken((request as RenewTokenRequest).refreshToken)
+        val user: CAMSDB.User = userRepository.renewToken(data.subject, ipAddress)!!
+        val token = jwt.generateToken(user)
+
+        return RenewTokenResponse(token)
+
+    }
 }
 
 

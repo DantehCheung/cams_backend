@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.utils
 
+import com.fyp.crms_backend.entity.CAMSDB
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
@@ -27,19 +28,19 @@ class JWT(private val sKey: SKey) {
         }
     }
 
-    fun generateToken(CNA: String, accessLevel: Int): String {
+    fun generateToken(user: CAMSDB.User): String {
         return Jwts.builder()
-            .setSubject(CNA)
-            .claim("accessLevel", accessLevel)
+            .setSubject(user.CNA)
+            .claim("accessLevel", user.accessLevel)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + 3600000)) // 1 hour
             .signWith(SignatureAlgorithm.HS256, sKey.secretKey) //
             .compact()
     }
 
-    fun generateRefreshToken(CNA: String): String {
+    fun generateRefreshToken(user: CAMSDB.User): String {
         return Jwts.builder()
-            .setSubject(CNA)
+            .setSubject(user.CNA)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + 604800000)) // 7 days
             .signWith(SignatureAlgorithm.HS256, sKey.secretKey)
