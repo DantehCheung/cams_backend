@@ -79,14 +79,12 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
 
     fun findByCard(CardID: String, ipAddress: String): CAMSDB.User? {
         var CNA: String? = null
-        try {
-            CNA = jdbcTemplate.queryForObject<String>(
-                """SELECT CNA FROM usercard WHERE CardID = ?""",
-                arrayOf(CardID)
-            )
-        } catch (e: Exception) {
-            throw super.errorProcess("E02")
-        }
+
+        CNA = jdbcTemplate.queryForObject<String>(
+            """SELECT CNA FROM usercard WHERE CardID = ?""",
+            arrayOf(CardID)
+        )
+
 
         return super.APIprocess(CNA!!, "login by Card in ip $ipAddress") {
             val user = jdbcTemplate.query(
@@ -102,35 +100,74 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
 
     }
 
-    fun renewToken(CNA: String, ipAddress: String): CAMSDB.User? {
+    fun renewToken(CNA: String, salt: String, ipAddress: String): CAMSDB.User? {
         return super.APIprocess(CNA, "renew token in ip $ipAddress") {
             var user: CAMSDB.User? = null
-            try {
-                user = jdbcTemplate.queryForObject(
-                    """SELECT * FROM user where CNA = ? and lastLoginIP = ?""",
-                    arrayOf(CNA, ipAddress)
-                ) { rs, _ ->
-                    CAMSDB.User(
-                        CNA = rs.getString("CNA"),
-                        emailDomain = rs.getString("emailDomain"),
-                        salt = rs.getString("salt"),
-                        password = rs.getString("password"),
-                        accessLevel = rs.getInt("accessLevel"),
-                        accessPage = rs.getInt("accessPage"),
-                        firstName = rs.getString("firstName"),
-                        lastName = rs.getString("lastName"),
-                        contentNo = rs.getString("contentNo"),
-                        campusID = rs.getInt("campusID"),
-                        lastLoginTime = rs.getTimestamp("lastLoginTime")?.toLocalDateTime(),
-                        lastLoginIP = rs.getString("lastLoginIP"),
-                        loginFail = rs.getInt("loginFail")
-                    )
-                }
-            } catch (e: Exception) {
-                throw super.errorProcess("E02")
+            user = jdbcTemplate.queryForObject(
+                """SELECT * FROM user where CNA = ? and lastLoginIP = ? and salt = ? and password like '0%'""",
+                arrayOf(CNA, ipAddress, salt)
+            ) { rs, _ ->
+                CAMSDB.User(
+                    CNA = rs.getString("CNA"),
+                    emailDomain = rs.getString("emailDomain"),
+                    salt = rs.getString("salt"),
+                    password = rs.getString("password"),
+                    accessLevel = rs.getInt("accessLevel"),
+                    accessPage = rs.getInt("accessPage"),
+                    firstName = rs.getString("firstName"),
+                    lastName = rs.getString("lastName"),
+                    contentNo = rs.getString("contentNo"),
+                    campusID = rs.getInt("campusID"),
+                    lastLoginTime = rs.getTimestamp("lastLoginTime")?.toLocalDateTime(),
+                    lastLoginIP = rs.getString("lastLoginIP"),
+                    loginFail = rs.getInt("loginFail")
+                )
             }
             return@APIprocess user
         } as CAMSDB.User?
+    }
+
+    private fun getRandomString(length: Int): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
+    }
+
+    fun changePw(CNA: String, oldPW: String, newPW: String): Boolean {
+        return super.APIprocess(CNA, "Change Password") {
+            var state = false
+            val newSalt = getRandomString(5)
+
+            // Verify the old password
+            val user = jdbcTemplate.query(
+                """SELECT * 
+               FROM user 
+               WHERE CNA = ? 
+                 AND SUBSTRING(password, 2) = SHA2(CONCAT(?, (SELECT salt FROM user WHERE CNA = ?)), 256)""",
+                rowMapper,
+                CNA, oldPW, CNA
+            ).firstOrNull()
+
+            if (user == null) {
+                // If the old password is incorrect, process an error
+                throw super.errorProcess("E08") // E08: Invalid old password
+            } else {
+                // Update the password with the new salt and new password
+                val rowsUpdated = jdbcTemplate.update(
+                    """UPDATE user 
+                   SET password = CONCAT('0', SHA2(CONCAT(?, ?), 256)), 
+                       salt = ?
+                   WHERE CNA = ?""",
+                    newPW, newSalt, newSalt, CNA
+                )
+
+                // Check if the update was successful
+                state = rowsUpdated > 0
+            }
+
+            return@APIprocess state
+        } as Boolean
     }
 
 }

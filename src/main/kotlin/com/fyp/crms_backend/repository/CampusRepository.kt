@@ -22,16 +22,9 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         )
     }
 
-    fun fetchData(CNA: String): List<CAMSDB.Campus> {
+    fun fetchData(CNA: String, accessLevel: Int): List<CAMSDB.Campus> {
 
         return super.APIprocess(CNA, "get Campus Data") {
-            val result1 = jdbcTemplate.query(
-                """SELECT accessLevel FROM user where CNA = ?""",
-                rowMapper1,
-                CNA
-            )
-            val accessLevel:Int = result1.firstOrNull()?.accessLevel!!
-
             val result: List<CAMSDB.Campus> = if (accessLevel > 100) {
                 jdbcTemplate.query("""SELECT campus.campusID, campusShortName, campusName 
              FROM user 
@@ -101,7 +94,8 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
             )
             if (rows > 0) "Updated successfully" else "No rows updated"
         } else {
-            "Campus does not exist"
+            throw RuntimeException("Campus does not exist")
+
         }
     }
 

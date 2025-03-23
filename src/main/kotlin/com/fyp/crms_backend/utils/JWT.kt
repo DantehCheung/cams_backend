@@ -41,6 +41,7 @@ class JWT(private val sKey: SKey) {
     fun generateRefreshToken(user: CAMSDB.User): String {
         return Jwts.builder()
             .setSubject(user.CNA)
+            .claim("salt", user.salt)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + 604800000)) // 7 days
             .signWith(SignatureAlgorithm.HS256, sKey.secretKey)

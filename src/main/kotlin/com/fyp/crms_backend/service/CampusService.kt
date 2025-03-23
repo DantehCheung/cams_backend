@@ -15,7 +15,7 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
 
         val data: Claims = decryptToken(request.token)
 
-        val repo = campusRepository.fetchData(data.subject)
+        val repo = campusRepository.fetchData(data.subject, data["accessLevel"] as Int)
             ?: throw IllegalArgumentException("No campus data found for the user")
 
         val c: List<GetCampusResponse.Campus> = repo.map { campus ->
