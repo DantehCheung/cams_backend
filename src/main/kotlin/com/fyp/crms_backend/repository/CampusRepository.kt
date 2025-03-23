@@ -47,6 +47,7 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
 
     }
 
+    // CREATE
     fun addData(campusShortName: String, campusName: String): String {
         // Check for existing record
         val count = jdbcTemplate.queryForObject(
@@ -74,5 +75,34 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         }
     }
 
+    // UPDATE
+
+    fun editData(campusID:Int, campusShortName: String, campusName: String): String {
+        val count = jdbcTemplate.queryForObject(
+            """
+        SELECT COUNT(*) FROM campus
+        WHERE campusID = ?
+        """.trimIndent(),
+            Int::class.java,
+           campusID
+        ) ?: 0
+
+        return if (count > 0) {
+            val rows = jdbcTemplate.update(
+                """
+            UPDATE campus
+            SET campusName = ?,
+                campusShortName = ?
+            WHERE campusID = ?
+            """.trimIndent(),
+                campusName,
+                campusShortName,
+                campusID
+            )
+            if (rows > 0) "Updated successfully" else "No rows updated"
+        } else {
+            "Campus does not exist"
+        }
+    }
 
 }

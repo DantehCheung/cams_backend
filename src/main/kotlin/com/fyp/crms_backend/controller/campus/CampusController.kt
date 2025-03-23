@@ -1,10 +1,7 @@
 package com.fyp.crms_backend.controller.campus
 
 
-import com.fyp.crms_backend.dto.campus.CampusAddRequest
-import com.fyp.crms_backend.dto.campus.CampusAddResponse
-import com.fyp.crms_backend.dto.campus.GetCampusRequest
-import com.fyp.crms_backend.dto.campus.GetCampusResponse
+import com.fyp.crms_backend.dto.campus.*
 import com.fyp.crms_backend.service.CampusService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -19,13 +16,22 @@ class CampusController(private val campusService: CampusService) {
     fun getCampus(
         @RequestBody request: GetCampusRequest
     ): GetCampusResponse {
-        return campusService.execute(request)
+        return campusService.get(request)
     }
 
     @PostMapping("/addcampus")
     fun AddCampus(
-        @RequestBody request: CampusAddRequest
-    ) : CampusAddResponse {
+        @RequestBody request: AddCampusRequest
+    ) : AddCampusResponse {
         return campusService.add(request)
     }
+
+    @PostMapping("/editcampus")
+    fun EditCampus(
+        @RequestBody request : EditCampusRequest
+    ) : EditCampusResponse {
+        return campusService.edit(request)
+    }
+
+
 }
