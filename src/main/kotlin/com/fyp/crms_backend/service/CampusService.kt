@@ -1,10 +1,7 @@
 package com.fyp.crms_backend.service
 
 
-import com.fyp.crms_backend.dto.campus.CampusAddRequest
-import com.fyp.crms_backend.dto.campus.CampusAddResponse
-import com.fyp.crms_backend.dto.campus.GetCampusRequest
-import com.fyp.crms_backend.dto.campus.GetCampusResponse
+import com.fyp.crms_backend.dto.campus.*
 import com.fyp.crms_backend.repository.CampusRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -14,7 +11,7 @@ import org.springframework.stereotype.Service
 @Service
 class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : ApiService(jwt) {
 
-    fun execute(request: GetCampusRequest): GetCampusResponse {
+    fun get(request: GetCampusRequest): GetCampusResponse {
 
         val data: Claims = decryptToken(request.token)
 
@@ -35,10 +32,19 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
         )
     }
 
-    fun add(request: CampusAddRequest): CampusAddResponse {
-        val data: Claims = decryptToken(request.token)
+    fun add(request: AddCampusRequest): AddCampusResponse {
         val result: String = campusRepository.addData(request.campusShortName, request.campusName)
-        return CampusAddResponse(
+        return AddCampusResponse(
+            campusShortName = request.campusShortName,
+            campusName = request.campusName,
+            resultState = result
+        )
+    }
+
+
+    fun edit(request: EditCampusRequest): EditCampusResponse {
+        val result: String = campusRepository.editData(request.campusID,request.campusShortName, request.campusName)
+        return EditCampusResponse(
             campusShortName = request.campusShortName,
             campusName = request.campusName,
             resultState = result
