@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service
 @Service
 class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : ApiService(jwt) {
 
+
+
     fun get(request: GetCampusRequest): GetCampusResponse {
 
         val data: Claims = decryptToken(request.token)
@@ -33,7 +35,10 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
     }
 
     fun add(request: AddCampusRequest): AddCampusResponse {
-        val result: String = campusRepository.addData(request.campusShortName, request.campusName)
+
+        val data: Claims = decryptToken(request.token) // decrypt the token and get the CNA
+
+        val result: String = campusRepository.addData(data.subject,request.campusShortName, request.campusName) // put CNA into repo
         return AddCampusResponse(
             campusShortName = request.campusShortName,
             campusName = request.campusName,
@@ -43,7 +48,10 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
 
 
     fun edit(request: EditCampusRequest): EditCampusResponse {
-        val result: String = campusRepository.editData(request.campusID,request.campusShortName, request.campusName)
+
+        val data: Claims = decryptToken(request.token) // decrypt the token and get the CNA
+
+        val result: String = campusRepository.editData(data.subject,request.campusID,request.campusShortName, request.campusName)
         return EditCampusResponse(
             campusShortName = request.campusShortName,
             campusName = request.campusName,

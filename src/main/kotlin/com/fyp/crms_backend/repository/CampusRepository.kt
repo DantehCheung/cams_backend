@@ -41,62 +41,68 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
     }
 
     // CREATE
-    fun addData(campusShortName: String, campusName: String): String {
-        // Check for existing record
-        val count = jdbcTemplate.queryForObject(
-            """
+    fun addData(CNA: String,campusShortName: String, campusName: String): String {
+
+        return super.APIprocess(CNA,"add Campus Data"){
+            // Check for existing record
+            val count = jdbcTemplate.queryForObject(
+                """
         SELECT COUNT(*) FROM campus
         WHERE campusShortName = ? OR campusName = ?
         """.trimIndent(),
-            Int::class.java,
-            campusShortName,
-            campusName
-        ) ?: 0
+                Int::class.java,
+                campusShortName,
+                campusName
+            ) ?: 0
 
-        return if (count > 0) {
-            "Campus already exists"
-        } else {
-            val rows = jdbcTemplate.update(
-                """
+            return@APIprocess if (count > 0) {
+                "Campus already exists"
+            } else {
+                val rows = jdbcTemplate.update(
+                    """
             INSERT INTO campus(campusShortName, campusName)
             VALUES (?, ?)
             """.trimIndent(),
-                campusShortName,
-                campusName
-            )
-            if (rows > 0) "Inserted successfully" else "No rows inserted"
-        }
+                    campusShortName,
+                    campusName
+                )
+                if (rows > 0) "Inserted successfully" else "No rows inserted"
+            }
+        } as String
+
     }
 
     // UPDATE
 
-    fun editData(campusID:Int, campusShortName: String, campusName: String): String {
-        val count = jdbcTemplate.queryForObject(
-            """
+    fun editData(CNA:String,campusID:Int, campusShortName: String, campusName: String): String {
+       return super.APIprocess(CNA,"edit Campus Data"){
+           val count = jdbcTemplate.queryForObject(
+               """
         SELECT COUNT(*) FROM campus
         WHERE campusID = ?
         """.trimIndent(),
-            Int::class.java,
-           campusID
-        ) ?: 0
+               Int::class.java,
+               campusID
+           ) ?: 0
 
-        return if (count > 0) {
-            val rows = jdbcTemplate.update(
-                """
+           return@APIprocess if (count > 0) {
+               val rows = jdbcTemplate.update(
+                   """
             UPDATE campus
             SET campusName = ?,
                 campusShortName = ?
             WHERE campusID = ?
             """.trimIndent(),
-                campusName,
-                campusShortName,
-                campusID
-            )
-            if (rows > 0) "Updated successfully" else "No rows updated"
-        } else {
-            throw RuntimeException("Campus does not exist")
+                   campusName,
+                   campusShortName,
+                   campusID
+               )
+               if (rows > 0) "Updated successfully" else "No rows updated"
+           } else {
+               throw RuntimeException("Campus does not exist")
 
-        }
+           }
+       } as String
     }
 
 
