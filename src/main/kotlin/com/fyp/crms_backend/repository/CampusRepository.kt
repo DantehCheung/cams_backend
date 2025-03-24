@@ -99,4 +99,5 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         }
     }
 
+
 }
