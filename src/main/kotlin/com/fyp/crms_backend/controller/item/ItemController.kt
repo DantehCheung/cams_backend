@@ -16,6 +16,6 @@ class ItemController(private val itemService: ItemService) {
     fun getItems(
         @RequestBody request: GetItemRequest
     ): GetItemResponse {
-        return itemService.execute(request)
+        return itemService.get(request)
     }
 }

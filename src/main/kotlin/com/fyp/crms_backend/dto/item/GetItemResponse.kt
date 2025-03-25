@@ -5,14 +5,20 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 data class GetItemResponse(
-    val deviceID: Int,
-    val deviceName: String,
-    val price: BigDecimal,
-    val orderDate: LocalDate,
-    val arriveDate: LocalDate,
-    val maintenanceDate: LocalDate,
-    val roomID: Int,
-    val state: Char,
-    val remark: String
 
-    ) : Response
+    val i : List<Item>
+):Response{
+    data class Item(
+        val deviceID: Int? = 0,
+        val deviceName: String? = null,
+        val price: BigDecimal? = null,
+        val orderDate: LocalDate? = null,
+        val arriveDate: LocalDate?? = null,
+        val maintenanceDate: LocalDate?? = null,
+        val roomID: Int? = null,
+        val state: Char? = null,
+        val remark: String? = null
+    )
+}
+
+

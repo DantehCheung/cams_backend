@@ -24,7 +24,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         )
     }
 
-    fun fetchData(CNA: String): CAMSDB.Device {
+    fun fetchData(CNA: String): List<CAMSDB.Device> {
 
         return super.APIprocess(CNA, "get Device Data") {
             val result: List<CAMSDB.Device> = jdbcTemplate.query(
@@ -33,8 +33,8 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                 CNA
             )
 
-            return@APIprocess result.firstOrNull()
-        } as CAMSDB.Device
+            return@APIprocess result
+        } as List<CAMSDB.Device>
 
     }
 
