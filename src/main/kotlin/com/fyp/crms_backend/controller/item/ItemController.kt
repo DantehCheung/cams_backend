@@ -1,7 +1,9 @@
 package com.fyp.crms_backend.controller.item
 
-import com.fyp.crms_backend.dto.item.GetItemRequest
-import com.fyp.crms_backend.dto.item.GetItemResponse
+import com.fyp.crms_backend.controller.ApiController
+import com.fyp.crms_backend.dto.Response
+import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -10,12 +12,21 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api")
-class ItemController(private val itemService: ItemService) {
+class ItemController(private val itemService: ItemService) : ApiController(){
 
     @PostMapping("/getitems")
     fun getItems(
         @RequestBody request: GetItemRequest
-    ): GetItemResponse {
-        return itemService.execute(request)
+    ): Response {
+        return process(request){
+            return@process itemService.execute(request)
+        }
+    }
+
+    @PostMapping("/additem")
+    fun addItem(
+        @RequestBody request: AddItemRequest
+    ): stateResponse {
+        return itemService.addItem(request)
     }
 }
