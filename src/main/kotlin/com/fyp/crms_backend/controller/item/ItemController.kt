@@ -23,10 +23,15 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
+    /*
     @PostMapping("/additem")
     fun addItem(
         @RequestBody request: AddItemRequest
-    ): stateResponse {
-        return itemService.addItem(request)
+    ): Response {
+        return process(request){
+            return@process itemService.addItem(request)
+        }
     }
+    *
+     */
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
+
     private val rowMapper = RowMapper<CAMSDB.Device> { rs, _ ->
         CAMSDB.Device(
 
@@ -25,13 +26,14 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         )
     }
 
-    fun fetchData(CNA: String): List<CAMSDB.Device> {
+    fun fetchData(CNA: String,roomID: Int): List<CAMSDB.Device> {
 
         return super.APIprocess(CNA, "get Device Data") {
             val result: List<CAMSDB.Device> = jdbcTemplate.query(
-                """select deviceID,deviceName,price,orderDate,arriveDate,maintenanceDate,device.roomID,state,remark from device, room where device.roomID = room.roomID and CNA = ? """,
+                """SELECT deviceID,deviceName,price,orderDate,arriveDate,maintenanceDate,device.roomID,state,remark from device inner join room where  device.roomID = room.roomID AND CNA = ? AND room.roomID = ?""",
                 rowMapper,
-                CNA
+                CNA,
+                roomID
             )
 
             return@APIprocess result
@@ -39,9 +41,13 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
 
     }
 
+    /*
   fun addItem(CNA:String,roomID: Int, devices: List<DeviceWithParts>) : Boolean {
-      return true
-  }
+
+        return super.APIprocess(CNA,"add Device Data"){
+                return@APIprocess
+        }
+  }*/
 
 
 }

@@ -18,7 +18,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
 
         val data: Claims = decryptToken(request.token)
 
-        val repo = itemRepository.fetchData(data.subject)
+        val repo = itemRepository.fetchData(data.subject,request.roomID)
             ?: throw IllegalArgumentException("No campus data found for the user")
 
 
@@ -43,7 +43,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
 
     }
 
-
+/*
     // Add Item
     fun addItem(request: AddItemRequest): stateResponse {
 
@@ -55,7 +55,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
             result
         )
     }
-
+*/
 
 }
 

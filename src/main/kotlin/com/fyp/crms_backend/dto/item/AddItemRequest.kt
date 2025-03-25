@@ -18,7 +18,7 @@ data class DeviceWithParts(
     val orderDate: LocalDate,
     val arriveDate: LocalDate,
     val maintenanceDate: LocalDate,
-    val roomID: Int,
+    val roomID: Int, // need to remove?
     val state: Char,
     val remark: String,
     val deviceParts: List<DevicePart>,
