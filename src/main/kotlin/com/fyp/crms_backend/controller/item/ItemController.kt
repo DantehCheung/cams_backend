@@ -19,7 +19,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         @RequestBody request: GetItemRequest
     ): Response {
         return process(request){
-            return@process itemService.execute(request)
+            return@process itemService.get(request)
         }
     }
 

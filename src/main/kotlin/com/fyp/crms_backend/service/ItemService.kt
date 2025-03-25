@@ -1,7 +1,9 @@
 package com.fyp.crms_backend.service
 
+import com.fyp.crms_backend.dto.item.AddItemRequest
 import com.fyp.crms_backend.dto.item.GetItemRequest
 import com.fyp.crms_backend.dto.item.GetItemResponse
+import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -34,29 +36,24 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
             )
         }
 
-
         return GetItemResponse(
-            deviceID = repo.deviceID!!,
-            deviceName = repo.deviceName!!,
-            price = repo.price!!,
-            orderDate = repo.orderDate!!,
-            arriveDate = repo.arriveDate!!,
-            maintenanceDate = repo.maintenanceDate!!,
-            roomID = repo.roomID!!,
-            state = repo.state!!,
-            remark = repo.remark!!
-
-
+            i= i
         )
+
+
     }
 
 
     // Add Item
-    fun addItem(request: AddItemRequest): stateResponse{
+    fun addItem(request: AddItemRequest): stateResponse {
 
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = itemRepository.addItem(data.subject,request.roomID,request.devices);
+
+        return stateResponse(
+            result
+        )
     }
 
 

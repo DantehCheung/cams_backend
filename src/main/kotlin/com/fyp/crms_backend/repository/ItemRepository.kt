@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.dto.item.DeviceWithParts
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -37,6 +38,10 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         } as List<CAMSDB.Device>
 
     }
+
+  fun addItem(CNA:String,roomID: Int, devices: List<DeviceWithParts>) : Boolean {
+      return true
+  }
 
 
 }
