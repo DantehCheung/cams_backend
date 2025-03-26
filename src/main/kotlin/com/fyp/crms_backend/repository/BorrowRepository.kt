@@ -2,6 +2,7 @@ package com.fyp.crms_backend.repository
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
 @Repository
@@ -16,12 +17,28 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         return true
     }
 
+    @Transactional
     fun reservation(CNA: String, itemID: Int, borrowDate: LocalDate): Boolean {
         return super.APIprocess(CNA, "reservation") {
             if (!checkBookingAvailable(itemID, borrowDate)) {
                 return@APIprocess false
             }
+
             val result: Int = jdbcTemplate.update(
+                """INSERT INTO `cams`.`deviceborrowrecord`
+(
+`borrowDate`,
+`deviceID`,
+`borrowUserCNA`,
+`leasePeriod`)
+VALUES
+?,
+?,
+?,
+?)""",
+                borrowDate, itemID, CNA, borrowDate.plusDays(14)
+            )
+            jdbcTemplate.update(
                 """INSERT INTO `cams`.`deviceborrowrecord`
 (
 `borrowDate`,
@@ -57,17 +74,18 @@ VALUES
 
     fun remand(CNA: String, returnList: List<Int>): List<Boolean> {
         val stateList: List<Boolean> = List<Boolean>(returnList.size) { false }
-//        return super.APIprocess(CNA, "remand") {
-//            if (!checkReturnAvailable(itemID)) {
-//                return@APIprocess false
-//            }
-//            val result: Int = jdbcTemplate.update(
-//                """INSERT INTO `deviceborrowrecord` (`deviceID`, `borrowUserCNA`) VALUES ( ?, ?)""",
-//                itemID, CNA
-//            )
-//
-//            return@APIprocess result > 0
-//        } as Boolean
+        return super.APIprocess(CNA, "remand") {
+            returnList.map { itemID ->
+                if (!checkReturnAvailable(itemID)) {
+                    return@APIprocess false
+                }
+                val result: Int = jdbcTemplate.update(
+                    """INSERT INTO `deviceborrowrecord` (`deviceID`, `borrowUserCNA`) VALUES ( ?, ?)""",
+                    itemID, CNA
+                )
+            }
+            return@APIprocess stateList
+        } as List<Boolean>
         """INSERT INTO `cams`.`checkdevicereturnrecord`
 (`checkRecordID`,
 `checkDT`,
@@ -98,5 +116,6 @@ VALUES
     fun checkRemand(CNA: String) {
         throw Exception("")
     }
+
 
 }
