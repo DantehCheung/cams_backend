@@ -2,7 +2,7 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.dto.Request
 import com.fyp.crms_backend.dto.login.*
-import com.fyp.crms_backend.dto.StateResponse
+import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
@@ -53,11 +53,11 @@ class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiSer
 
     }
 
-    fun changePw(request: ChangePwRequest): StateResponse {
+    fun changePw(request: ChangePwRequest): stateResponse {
         val data: Claims = decryptToken(request.token)
         val status: Boolean = userRepository.changePw(data.subject, request.oldPassword, request.newPassword)
 
-        return StateResponse(status = status)
+        return stateResponse(status = status)
 
     }
 }

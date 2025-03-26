@@ -1,13 +1,11 @@
 package com.fyp.crms_backend.repository
 
-import com.fyp.crms_backend.dto.item.DeviceDoc
-import com.fyp.crms_backend.dto.item.DevicePart
-import com.fyp.crms_backend.dto.item.DeviceRFID
-import com.fyp.crms_backend.dto.item.DeviceWithParts
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 
 @Repository
@@ -47,7 +45,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     // Brief explanation:
 // 1. For each device, insert into 'device' and retrieve the new ID.
 // 2. Then insert docs and parts (and RFIDs) referencing that new ID.
-
+    @Transactional
     fun addItem(CNA: String, devices: List<DeviceWithParts>): Boolean {
         return super.APIprocess(CNA, "add Device Data") {
             devices.forEach { device ->
@@ -138,6 +136,112 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         }
     }
 
+// ---------------------------------------------------------------------------------------------
+    // Delete Item
+@Transactional
+fun deleteItem(CNA: String, deviceID: Int): Boolean {
+    return super.APIprocess(CNA, "delete Device Data") {
+        // Verify that the device exists and is not already marked as deleted.
+        val count = jdbcTemplate.queryForObject(
+            """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND state <> 'D'""",
+            Int::class.java,
+            deviceID
+        ) ?: 0
 
+        if (count == 0) {
+            throw IllegalStateException("Device not found or already deleted")
+        }
+
+        // Perform delete operations (mark as deleted)
+        jdbcTemplate.update(
+            """UPDATE Device SET state = 'D' WHERE deviceID = ?""",
+            deviceID
+        )
+        jdbcTemplate.update(
+            """UPDATE DevicePart SET state = 'D' WHERE deviceID = ?""",
+            deviceID
+        )
+        jdbcTemplate.update(
+            """UPDATE DeviceRFID SET state = 'D' WHERE deviceID = ?""",
+            deviceID
+        )
+        jdbcTemplate.update(
+            """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ?""",
+            deviceID
+        )
+
+        return@APIprocess true
+    } as Boolean
+}
+
+    // Edit
+    @Transactional
+    fun editItem(CNA: String, deviceID: Int, request: EditItemRequest): Boolean {
+        // Verify device exists.
+        val count = jdbcTemplate.queryForObject(
+            """SELECT COUNT(1) FROM Device WHERE deviceID = ?""",
+            Int::class.java,
+            deviceID
+        ) ?: 0
+
+        if (count == 0) {
+            throw IllegalStateException("Device not found")
+        }
+
+        // Update Device record.
+        jdbcTemplate.update(
+            """UPDATE Device
+               SET deviceName = ?,
+                   price = ?,
+                   orderDate = ?,
+                   arriveDate = ?,
+                   maintenanceDate = ?,
+                   roomID = ?,
+                   state = ?,
+                   remark = ?
+               WHERE deviceID = ?""",
+            request.deviceName,
+            request.price,
+            request.orderDate,
+            request.arriveDate,
+            request.maintenanceDate,
+            request.roomID,
+            request.state.toString(),
+            request.remark,
+            deviceID
+        )
+
+        // Update document records.
+        request.docs.forEach { doc ->
+            jdbcTemplate.update(
+                """UPDATE DeviceDoc SET docPath = ? 
+                   WHERE deviceDocID = ? AND deviceID = ?""",
+                doc.docPath,
+                doc.deviceDocID,
+                deviceID
+            )
+        }
+
+        // Update device part and associated RFID records.
+        request.deviceParts.forEach { part ->
+            jdbcTemplate.update(
+                """UPDATE DevicePart SET devicePartName = ? 
+                   WHERE devicePartID = ? AND deviceID = ?""",
+                part.devicePartName,
+                part.devicePartID,
+                deviceID
+            )
+            part.deviceRFID.forEach { rfid ->
+                jdbcTemplate.update(
+                    """UPDATE DeviceRFID SET RFID = ? 
+                       WHERE deviceRFIDID = ? AND deviceID = ?""",
+                    rfid.RFID,
+                    rfid.deviceRFIDID,
+                    deviceID
+                )
+            }
+        }
+        return true
+    }
 
 }

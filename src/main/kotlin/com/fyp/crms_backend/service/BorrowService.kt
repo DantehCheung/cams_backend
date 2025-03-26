@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.StateResponse
+import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.dto.borrow.*
 import com.fyp.crms_backend.repository.BorrowRepository
 import com.fyp.crms_backend.utils.JWT
@@ -15,7 +15,7 @@ class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : 
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = borrowRepository.reservation(data.subject,request.itemID, request.borrowRecordID)
-        return StateResponse(
+        return stateResponse(
             status = result
         )
     }
@@ -24,7 +24,7 @@ class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : 
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = borrowRepository.borrow(data.subject,request.itemID)
-        return StateResponse(
+        return stateResponse(
             status = result
         )
     }

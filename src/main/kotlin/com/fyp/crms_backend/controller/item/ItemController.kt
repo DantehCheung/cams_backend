@@ -2,7 +2,7 @@ package com.fyp.crms_backend.controller.item
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.item.GetItemRequest
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -21,18 +21,38 @@ class ItemController(private val itemService: ItemService) : ApiController(){
             return@process itemService.get(request)
         }
     }
-/*
 
 
     @PostMapping("/additem")
     fun addItem(
         @RequestBody request: AddItemRequest
     ): Response {
-        //return process(request){
-            return/*@process*/ itemService.addItem(request)
-        //}
+        return process(request){
+            return@process itemService.addItem(request)
+        }
     }
 
-     */
+    /*
+    @PostMapping("/edititem")
+    fun editItem(
+        @RequestBody request: EditItemRequest
+    ): Response {
+        return process(request){
+            return@process itemService.editItem(request)
+        }
+    }
+*/
+
+    @PostMapping("/deleteitem")
+    fun deleteItem(
+        @RequestBody request: DeleteItemRequest
+    ): Response {
+        return process(request){
+            return@process itemService.deleteItem(request) // cant merge with edit method, different parameters
+        }
+    }
+
+
+
 
 }

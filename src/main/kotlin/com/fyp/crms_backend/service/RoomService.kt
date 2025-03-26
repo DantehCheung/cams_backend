@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.dto.room.*
-import com.fyp.crms_backend.dto.StateResponse
+import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.repository.RoomRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -32,13 +32,13 @@ class RoomService(private val roomRepository: RoomRepository, jwt: JWT) : ApiSer
 
     // Add Room
 
-    fun addRoom(request: AddRoomRequest) : StateResponse {
+    fun addRoom(request: AddRoomRequest) : stateResponse {
 
         val data: Claims = decryptToken(request.token)
 
         val result : Boolean = roomRepository.addRoom(data.subject,request.campusID,request.roomNumber,request.roomName)
 
-        return StateResponse(
+        return stateResponse(
            result
         )
     }
@@ -46,13 +46,13 @@ class RoomService(private val roomRepository: RoomRepository, jwt: JWT) : ApiSer
 
 
     // Edit Room
-    fun editRoom(request:EditRoomRequest) : StateResponse{
+    fun editRoom(request:EditRoomRequest) : stateResponse{
 
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = roomRepository.editRoom(data.subject,request.campusID,request.roomID,request.roomNumber,request.roomName)
 
-        return StateResponse(
+        return stateResponse(
             result
         )
     }
