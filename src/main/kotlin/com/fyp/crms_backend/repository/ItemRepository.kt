@@ -1,18 +1,20 @@
 package com.fyp.crms_backend.repository
 
-import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.item.DeviceDoc
+import com.fyp.crms_backend.dto.item.DevicePart
+import com.fyp.crms_backend.dto.item.DeviceRFID
+import com.fyp.crms_backend.dto.item.DeviceWithParts
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
 
 
-
 @Repository
-class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
-
+class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     private val rowMapper = RowMapper<CAMSDB.Device> { rs, _ ->
         CAMSDB.Device(
+
          deviceID = rs.getInt("deviceID"),
          deviceName = rs.getString("deviceName"),
          price = rs.getBigDecimal("price"),
@@ -135,7 +137,7 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
             })
         }
     }
-//
+
 
 
 }

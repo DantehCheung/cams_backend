@@ -42,17 +42,18 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
     }
 
 
-    /*// Add Item
-    fun addItem(request: AddItemRequest): stateResponse {
-
-        val data: Claims = decryptToken(request.token)
-
-        val result: Boolean = itemRepository.addItem(data.subject,request.roomID,request.devices);
-
-        return stateResponse(
-            result
-        )
-    }*/
+//
+//    fun addItem(request: AddItemRequest): stateResponse {
+//
+//        val data: Claims = decryptToken(request.token)
+//
+//        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
+//
+//        return stateResponse(
+//            result
+//        )
+//
+//    }
 
 
 
