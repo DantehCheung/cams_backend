@@ -1,6 +1,6 @@
 package com.fyp.crms_backend.repository
 
-import com.fyp.crms_backend.dto.item.DeviceWithParts
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -42,24 +42,88 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
     }
 
 
-    fun addItem(CNA: String, roomID: Int, devices: List<DeviceWithParts>): Boolean {
+    // Brief explanation:
+// 1. For each device, insert into 'device' and retrieve the new ID.
+// 2. Then insert docs and parts (and RFIDs) referencing that new ID.
+
+    fun addItem(CNA: String, devices: List<DeviceWithParts>): Boolean {
         return super.APIprocess(CNA, "add Device Data") {
             devices.forEach { device ->
-                jdbcTemplate.update(
-                    """INSERT INTO device (deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state, remark)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""".trimIndent(),
-                    device.deviceName,
-                    device.price,
-                    device.orderDate,
-                    device.arriveDate,
-                    device.maintenanceDate,
-                    device.roomID,
-                    device.state.toString(),
-                    device.remark
-                )
-                // Additional inserts for deviceParts or deviceDoc can be placed here
+                val deviceId = addSingleDevice(device)
+                addDocs(deviceId, device.deviceDoc)
+                addParts(deviceId, device.deviceParts)
             }
             return@APIprocess true
         } as Boolean
     }
+
+    private fun addSingleDevice(device: DeviceWithParts): Int {
+        val keyHolder = org.springframework.jdbc.support.GeneratedKeyHolder()
+        /*在插入資料時，GeneratedKeyHolder 會自動接收資料庫產生的主鍵 (常見為自增 ID)，並儲存在 keyHolder 中。
+        接著可透過 keyHolder.key 或對應方法取得該新插入記錄的 ID 來進行後續操作。*/
+        jdbcTemplate.update(
+            { con ->
+                val ps = con.prepareStatement(
+                    """INSERT INTO device (deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state, remark)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    java.sql.Statement.RETURN_GENERATED_KEYS
+                )
+                ps.setString(1, device.deviceName)
+                ps.setBigDecimal(2, device.price)
+                ps.setObject(3, device.orderDate)
+                ps.setObject(4, device.arriveDate)
+                ps.setObject(5, device.maintenanceDate)
+                ps.setInt(6, device.roomID)
+                ps.setString(7, device.state.toString())
+                ps.setString(8, device.remark)
+                ps // Return the PreparedStatement
+            },
+            keyHolder
+        )
+        return keyHolder.key?.toInt() ?: throw IllegalStateException("No generated key returned")
+    }
+
+    private fun addDocs(deviceId: Int, docs: List<DeviceDoc>) {
+        docs.forEach { doc ->
+            jdbcTemplate.update(
+                """INSERT INTO DeviceDoc (deviceID, docPath) VALUES (?, ?)""",
+                deviceId,
+                doc.docPath
+            )
+        }
+    }
+
+    private fun addParts(deviceId: Int, parts: List<DevicePart>) {
+        parts.forEach { part ->
+            val partKey = org.springframework.jdbc.support.GeneratedKeyHolder()
+            jdbcTemplate.update(
+                { con ->
+                    val ps = con.prepareStatement(
+                        """INSERT INTO DevicePartID (deviceID, devicePartName)
+                       VALUES (?, ?)""",
+                        java.sql.Statement.RETURN_GENERATED_KEYS
+                    )
+                    ps.setInt(1, deviceId)
+                    ps.setString(2, part.devicePartName)
+                    ps
+                },
+                partKey
+            )
+            val partId = partKey.key?.toInt() ?: throw IllegalStateException("No generated key returned")
+            addRFIDs(partId, part.deviceRFID)
+        }
+    }
+
+    private fun addRFIDs(partId: Int, rfids: List<DeviceRFID>) {
+        rfids.forEach { rfid ->
+            jdbcTemplate.update(
+                """INSERT INTO DeviceRFID (devicePartID, RFID) VALUES (?, ?)""",
+                partId,
+                rfid.RFID
+            )
+        }
+    }
+
+
+
 }

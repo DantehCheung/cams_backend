@@ -49,7 +49,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
 
         val data: Claims = decryptToken(request.token)
 
-        val result: Boolean = itemRepository.addItem(data.subject,request.roomID,request.devices);
+        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
 
         return stateResponse(
             result
