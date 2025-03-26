@@ -99,7 +99,7 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
             jdbcTemplate.update(
                 { con ->
                     val ps = con.prepareStatement(
-                        """INSERT INTO DevicePartID (deviceID, devicePartName)
+                        """INSERT INTO DevicePart (deviceID, devicePartName)
                        VALUES (?, ?)"""
                     )
                     ps.setInt(1, deviceId)
@@ -111,7 +111,7 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
             // Query to retrieve the partID for the inserted record.
             // This assumes that devicePartName is unique for this device.
             val partId = jdbcTemplate.queryForObject(
-                """SELECT devicePartID FROM DevicePartID 
+                """SELECT devicePartID FROM DevicePart
                WHERE deviceID = ? AND devicePartName = ?""",
                 Int::class.java,
                 deviceId,
