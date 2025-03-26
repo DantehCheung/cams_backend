@@ -95,32 +95,44 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
 
     private fun addParts(deviceId: Int, parts: List<DevicePart>) {
         parts.forEach { part ->
-            val partKey = org.springframework.jdbc.support.GeneratedKeyHolder()
+            // Insert first without generating the key automatically
             jdbcTemplate.update(
                 { con ->
                     val ps = con.prepareStatement(
                         """INSERT INTO DevicePartID (deviceID, devicePartName)
-                       VALUES (?, ?)""",
-                        java.sql.Statement.RETURN_GENERATED_KEYS
+                       VALUES (?, ?)"""
                     )
                     ps.setInt(1, deviceId)
                     ps.setString(2, part.devicePartName)
                     ps
-                },
-                partKey
+                }
             )
-            val partId = partKey.key?.toInt() ?: throw IllegalStateException("No generated key returned")
-            addRFIDs(partId, part.deviceRFID)
+
+            // Query to retrieve the partID for the inserted record.
+            // This assumes that devicePartName is unique for this device.
+            val partId = jdbcTemplate.queryForObject(
+                """SELECT devicePartID FROM DevicePartID 
+               WHERE deviceID = ? AND devicePartName = ?""",
+                Int::class.java,
+                deviceId,
+                part.devicePartName
+            ) ?: throw IllegalStateException("No generated key returned")
+
+            addRFIDs(deviceId, partId, part.deviceRFID)
         }
     }
 
-    private fun addRFIDs(partId: Int, rfids: List<DeviceRFID>) {
+    private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<DeviceRFID>) {
         rfids.forEach { rfid ->
-            jdbcTemplate.update(
-                """INSERT INTO DeviceRFID (devicePartID, RFID) VALUES (?, ?)""",
-                partId,
-                rfid.RFID
-            )
+            jdbcTemplate.update({ con ->
+                val ps = con.prepareStatement(
+                    """INSERT INTO DeviceRFID (deviceID, devicePartID, RFID) VALUES (?, ?, ?)"""
+                )
+                ps.setInt(1, deviceID)
+                ps.setInt(2, partId)
+                ps.setString(3, rfid.RFID)
+                ps
+            })
         }
     }
 
