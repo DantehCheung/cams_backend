@@ -23,7 +23,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
-    /*
+
     @PostMapping("/additem")
     fun addItem(
         @RequestBody request: AddItemRequest
@@ -32,6 +32,6 @@ class ItemController(private val itemService: ItemService) : ApiController(){
             return@process itemService.addItem(request)
         }
     }
-    *
-     */
+
+
 }

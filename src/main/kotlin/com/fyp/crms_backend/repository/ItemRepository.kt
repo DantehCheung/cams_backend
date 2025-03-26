@@ -41,13 +41,25 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
 
     }
 
-    /*
-  fun addItem(CNA:String,roomID: Int, devices: List<DeviceWithParts>) : Boolean {
 
-        return super.APIprocess(CNA,"add Device Data"){
-                return@APIprocess
-        }
-  }*/
-
-
+    fun addItem(CNA: String, roomID: Int, devices: List<DeviceWithParts>): Boolean {
+        return super.APIprocess(CNA, "add Device Data") {
+            devices.forEach { device ->
+                jdbcTemplate.update(
+                    """INSERT INTO device (deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state, remark)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""".trimIndent(),
+                    device.deviceName,
+                    device.price,
+                    device.orderDate,
+                    device.arriveDate,
+                    device.maintenanceDate,
+                    device.roomID,
+                    device.state.toString(),
+                    device.remark
+                )
+                // Additional inserts for deviceParts or deviceDoc can be placed here
+            }
+            return@APIprocess true
+        } as Boolean
+    }
 }

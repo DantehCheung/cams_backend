@@ -7,7 +7,6 @@ import java.time.LocalDate
 
 data class AddItemRequest(
     val token: String,
-    val roomID: Int,
     val devices: List<DeviceWithParts>
 ) : Request
 

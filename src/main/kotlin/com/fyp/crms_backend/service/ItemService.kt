@@ -43,7 +43,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
 
     }
 
-/*
+
     // Add Item
     fun addItem(request: AddItemRequest): stateResponse {
 
@@ -55,7 +55,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
             result
         )
     }
-*/
+
 
 }
 
