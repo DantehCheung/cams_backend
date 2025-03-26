@@ -9,10 +9,10 @@ import org.springframework.stereotype.Repository
 
 
 @Repository
-class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
-
+class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     private val rowMapper = RowMapper<CAMSDB.Device> { rs, _ ->
         CAMSDB.Device(
+
          deviceID = rs.getInt("deviceID"),
          deviceName = rs.getString("deviceName"),
          price = rs.getBigDecimal("price"),
@@ -41,13 +41,9 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
 
     }
 
-    /*
   fun addItem(CNA:String,roomID: Int, devices: List<DeviceWithParts>) : Boolean {
-
-        return super.APIprocess(CNA,"add Device Data"){
-                return@APIprocess
-        }
-  }*/
+      return true
+  }
 
 
 }

@@ -3,8 +3,6 @@ package com.fyp.crms_backend.controller.room
 import com.fyp.crms_backend.dto.room.AddRoomRequest
 import com.fyp.crms_backend.dto.room.EditRoomRequest
 import com.fyp.crms_backend.dto.room.GetRoomRequest
-import com.fyp.crms_backend.dto.room.GetRoomResponse
-import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.service.RoomService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
