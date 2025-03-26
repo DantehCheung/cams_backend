@@ -30,7 +30,7 @@ data class DeviceWithParts(
     )
 
 data class DeviceRFID(
-    val RFID: String? = null
+    val RFID: String
 )
 
 data class DeviceDoc(
