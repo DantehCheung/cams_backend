@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.service
 
+import com.fyp.crms_backend.dto.StateResponse
 import com.fyp.crms_backend.dto.item.*
-import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -17,52 +17,34 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
         val data: Claims = decryptToken(request.token)
 
         val repo = itemRepository.fetchData(data.subject,request.roomID)
-            ?: throw IllegalArgumentException("No campus data found for the user")
 
-
-        val i: List<GetItemResponse.Item> = repo.map { item ->
-            GetItemResponse.Item(
-                deviceID = item.deviceID,
-                deviceName = item.deviceName,
-                price = item.price,
-                orderDate = item.orderDate,
-                arriveDate = item.arriveDate,
-                maintenanceDate = item.maintenanceDate,
-                roomID = item.roomID,
-                state = item.state,
-                remark = item.remark
-            )
-        }
-
-        return GetItemResponse(
-            i= i
-        )
+        return repo
 
 
     }
 
 
     // Add Item
-    fun addItem(request: AddItemRequest): stateResponse {
+    fun addItem(request: AddItemRequest): StateResponse {
 
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = itemRepository.addItem(data.subject,request.devices);
 
-        return stateResponse(
+        return StateResponse(
             result
         )
     }
 
 
     // Delete Item
-    fun deleteItem(request: DeleteItemRequest): stateResponse{
+    fun deleteItem(request: DeleteItemRequest): StateResponse {
 
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = itemRepository.deleteItem(data.subject,request.deviceID);
 
-        return stateResponse(
+        return StateResponse(
             result
         )
     }

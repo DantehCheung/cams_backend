@@ -1,44 +1,139 @@
 package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.dto.item.*
-import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 
 
 @Repository
 class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
-    private val rowMapper = RowMapper<CAMSDB.Device> { rs, _ ->
-        CAMSDB.Device(
 
-         deviceID = rs.getInt("deviceID"),
-         deviceName = rs.getString("deviceName"),
-         price = rs.getBigDecimal("price"),
-         orderDate = rs.getDate("orderDate")?.toLocalDate(),
-         arriveDate = rs.getDate("arriveDate")?.toLocalDate(),
-         maintenanceDate = rs.getDate("maintenanceDate")?.toLocalDate(),
-         roomID = rs.getInt("roomID"),
-         state = rs.getString("state")?.singleOrNull(),
-         remark = rs.getString("remark"),
-        )
+
+    fun fetchData(CNA: String, roomID: Int): GetItemResponse {
+        return super.APIprocess(CNA, "get campus") {
+            val sqlDevices = """
+        SELECT * 
+        FROM Device 
+        WHERE roomID = ?
+    """
+
+            // Fetch devices
+            val devices: List<GetItemResponse.Devices> = jdbcTemplate.query(sqlDevices, arrayOf(roomID)) { rs, _ ->
+                GetItemResponse.Devices(
+                    deviceID = rs.getInt("deviceID"),
+                    deviceName = rs.getString("deviceName"),
+                    price = rs.getBigDecimal("price"),
+                    orderDate = rs.getDate("orderDate")?.toLocalDate(),
+                    arriveDate = rs.getDate("arriveDate")?.toLocalDate(),
+                    maintenanceDate = rs.getDate("maintenanceDate")?.toLocalDate(),
+                    roomID = rs.getInt("roomID"),
+                    state = rs.getString("state")?.firstOrNull(), // Get the first character of the ENUM
+                    remark = rs.getString("remark"),
+                    docs = fetchDeviceDocs(rs.getInt("deviceID")),
+                    partID = fetchDeviceParts(rs.getInt("deviceID")),
+                    deviceRFID = fetchDeviceRFIDs(rs.getInt("deviceID"))
+                )
+            }
+
+            return@APIprocess GetItemResponse(device = devices)
+        } as GetItemResponse
     }
 
-    fun fetchData(CNA: String,roomID: Int): List<CAMSDB.Device> {
-
-        return super.APIprocess(CNA, "get Device Data") {
-
-            val result: List<CAMSDB.Device> = jdbcTemplate.query(
-                """SELECT deviceID,deviceName,price,orderDate,arriveDate,maintenanceDate,device.roomID,state,remark from device,room,user where  device.roomID = room.roomID AND user.CNA = ? AND room.roomID = ?""",
-                rowMapper,
-                CNA,
-                roomID
+    fun fetchDeviceDocs(deviceID: Int): List<GetItemResponse.DeviceDoc> {
+        val sql = """
+        SELECT * 
+        FROM DeviceDoc 
+        WHERE deviceID = ?
+    """
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+            GetItemResponse.DeviceDoc(
+                deviceID = rs.getInt("deviceID"),
+                docPath = rs.getString("docPath")
             )
+        }
+    }
 
-            return@APIprocess result
-        } as List<CAMSDB.Device>
+    fun fetchDeviceParts(deviceID: Int): List<GetItemResponse.DevicePartID> {
+        val sql = """
+        SELECT * 
+        FROM DevicePart 
+        WHERE deviceID = ?
+    """
 
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+            GetItemResponse.DevicePartID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                devicePartName = rs.getString("devicePartName")
+            )
+        }
+    }
+
+    fun fetchDeviceRFIDs(deviceID: Int): List<GetItemResponse.DeviceRFID> {
+        val sql = """
+        SELECT * 
+        FROM DeviceRFID 
+        WHERE deviceID = ?
+    """
+
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+            GetItemResponse.DeviceRFID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                RFID = rs.getString("RFID")
+            )
+        }
+    }
+
+
+    private fun fetchDeviceDocs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceDoc>> {
+        return jdbcTemplate.query(
+            """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()})"""
+        ) { rs, _ ->
+            GetItemResponse.DeviceDoc(
+                deviceID = rs.getInt("deviceID"),
+                docPath = rs.getString("docPath")
+            )
+        }.groupBy { it.deviceID }
+    }
+
+    private fun fetchDeviceParts(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DevicePartID>> {
+        return jdbcTemplate.query(
+            """
+        SELECT 
+            deviceID, 
+            devicePartID, 
+            devicePartName 
+        FROM devicePartID 
+        WHERE deviceID IN (${deviceIDs.joinToString()})
+        """
+        ) { rs, _ ->
+            GetItemResponse.DevicePartID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                devicePartName = rs.getString("devicePartName")
+            )
+        }.groupBy { it.deviceID }
+    }
+
+    private fun fetchDeviceRFIDs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceRFID>> {
+        return jdbcTemplate.query(
+            """
+        SELECT 
+            deviceID, 
+            devicePartID, 
+            RFID            
+        FROM deviceRFID 
+        WHERE deviceID IN (${deviceIDs.joinToString()})
+        """
+        ) { rs, _ ->
+            GetItemResponse.DeviceRFID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                RFID = rs.getString("RFID")
+            )
+        }.groupBy { it.deviceID }
     }
 
 

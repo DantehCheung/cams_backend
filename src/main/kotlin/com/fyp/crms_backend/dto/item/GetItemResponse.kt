@@ -6,9 +6,9 @@ import java.time.LocalDate
 
 data class GetItemResponse(
 
-    val i : List<Item>
+    val device: List<Devices>
 ):Response{
-    data class Item(
+    data class Devices(
         val deviceID: Int? = 0,
         val deviceName: String? = null,
         val price: BigDecimal? = null,
@@ -17,7 +17,27 @@ data class GetItemResponse(
         val maintenanceDate: LocalDate?? = null,
         val roomID: Int? = null,
         val state: Char? = null,
-        val remark: String? = null
+        val remark: String? = null,
+        val docs: List<DeviceDoc>,
+        val partID: List<DevicePartID>,
+        val deviceRFID: List<DeviceRFID>,
+    )
+
+    data class DeviceDoc(
+        val deviceID: Int? = null,
+        val docPath: String? = null
+    )
+
+    data class DevicePartID(
+        val deviceID: Int? = null,
+        val devicePartID: Int? = null,
+        val devicePartName: String? = null
+    )
+
+    data class DeviceRFID(
+        val deviceID: Int? = null,
+        val devicePartID: Int? = null,
+        val RFID: String? = null
     )
 }
 
