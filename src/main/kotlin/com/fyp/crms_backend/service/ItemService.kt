@@ -1,7 +1,7 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.dto.item.GetItemRequest
-import com.fyp.crms_backend.dto.item.GetItemResponse
+import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -16,7 +16,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
 
         val data: Claims = decryptToken(request.token)
 
-        val repo = itemRepository.fetchData(data.subject, request.roomID)
+        val repo = itemRepository.fetchData(data.subject,request.roomID)
             ?: throw IllegalArgumentException("No campus data found for the user")
 
 
@@ -35,27 +35,48 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
         }
 
         return GetItemResponse(
-            i = i
+            i= i
         )
 
 
     }
 
 
-//
-//    fun addItem(request: AddItemRequest): stateResponse {
-//
-//        val data: Claims = decryptToken(request.token)
-//
-//        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
-//
-//        return stateResponse(
-//            result
-//        )
-//
-//    }
+    // Add Item
+    fun addItem(request: AddItemRequest): stateResponse {
+
+        val data: Claims = decryptToken(request.token)
+
+        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
+
+        return stateResponse(
+            result
+        )
+    }
 
 
+    // Delete Item
+    fun deleteItem(request: DeleteItemRequest): stateResponse{
+
+        val data: Claims = decryptToken(request.token)
+
+        val result: Boolean = itemRepository.deleteItem(data.subject,request.deviceID);
+
+        return stateResponse(
+            result
+        )
+    }
+
+    // Edit Item
+    @Service
+    class EditItemService(private val itemRepository: ItemRepository) {
+
+        fun editItem(request: EditItemRequest, deviceID: Int): Boolean {
+            // The token in EditItemRequest is used as CNA.
+            return itemRepository.editItem(request.token, deviceID, request)
+        }
+    }
 
 }
+
 
