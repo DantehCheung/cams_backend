@@ -1,9 +1,7 @@
 package com.fyp.crms_backend.service
 
-import com.fyp.crms_backend.dto.item.AddItemRequest
 import com.fyp.crms_backend.dto.item.GetItemRequest
 import com.fyp.crms_backend.dto.item.GetItemResponse
-import com.fyp.crms_backend.dto.stateResponse
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -18,7 +16,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
 
         val data: Claims = decryptToken(request.token)
 
-        val repo = itemRepository.fetchData(data.subject,request.roomID)
+        val repo = itemRepository.fetchData(data.subject, request.roomID)
             ?: throw IllegalArgumentException("No campus data found for the user")
 
 
@@ -37,26 +35,26 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
         }
 
         return GetItemResponse(
-            i= i
+            i = i
         )
 
 
     }
 
 
-    // Add Item
+    /*// Add Item
     fun addItem(request: AddItemRequest): stateResponse {
 
         val data: Claims = decryptToken(request.token)
 
-        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
+        val result: Boolean = itemRepository.addItem(data.subject,request.roomID,request.devices);
 
         return stateResponse(
             result
         )
-    }
+    }*/
+
 
 
 }
-
 

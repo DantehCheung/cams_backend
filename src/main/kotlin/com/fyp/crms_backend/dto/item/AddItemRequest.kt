@@ -17,20 +17,20 @@ data class DeviceWithParts(
     val orderDate: LocalDate,
     val arriveDate: LocalDate,
     val maintenanceDate: LocalDate,
-    val roomID: Int, // need to remove?
+    val roomID: Int,
     val state: Char,
     val remark: String,
     val deviceParts: List<DevicePart>,
     val deviceDoc: List<DeviceDoc>
 )
 
-data class DevicePart(
-    val devicePartName: String?,
-    val deviceRFID : List<DeviceRFID>,
-)
+    data class DevicePart(
+        val devicePartName: String?,
+        val deviceRFID: List<DeviceRFID>,
+    )
 
 data class DeviceRFID(
-    val RFID: String
+    val RFID: String? = null
 )
 
 data class DeviceDoc(
