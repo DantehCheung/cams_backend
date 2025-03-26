@@ -136,9 +136,6 @@ class ItemRepository(override val jdbcTemplate: JdbcTemplate) : ApiRepository(jd
         }
     }
 //
-  fun addItem(CNA:String,roomID: Int, devices: List<DeviceWithParts>) : Boolean {
-      return true
-  }
 
 
 }
