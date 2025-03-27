@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.queryForObject
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 
 @Repository
@@ -170,4 +171,71 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         } as Boolean
     }
 
-}
+
+
+
+    fun addUser(
+        CNA: String,
+        cnaToInsert: String,
+        emailDomain: String?,
+        password: String,
+        accessLevel: Int,
+        firstName: String,
+        lastName: String,
+        contentNo: String,
+        campusID: Int
+    ): Boolean {
+        return super.APIprocess(CNA, "Add User Data") {
+            val count = jdbcTemplate.queryForObject(
+                """SELECT COUNT(*) FROM user WHERE CNA = ?""",
+                Int::class.java,
+                cnaToInsert
+            ) ?: 0
+
+            // If user exists, throw an exception.
+           return@APIprocess if (count > 0) {
+                throw RuntimeException("User already exists")
+            }else {
+
+                val salt = getRandomString(5)
+                val accessPage: Int = when (accessLevel) {
+                    0 -> 65535
+                    100 -> 63487
+                    1000 -> 1540
+                    else -> 0
+                }
+
+               // In order to show fail log, I put the transactional tag here. by Danteh
+               @Transactional
+                fun performInsert(){
+                    val rowsUpdated = jdbcTemplate.update(
+                        """INSERT INTO user (CNA, emailDomain, salt, password, accessLevel, accessPage, firstName, lastName, contentNo, campusID, loginFail)
+                   VALUES (?, ?, ?, CONCAT('0', SHA2(CONCAT(?, ?), 256)), ?, ?, ?, ?, ?, ?, 0)""",
+                        cnaToInsert,
+                        emailDomain,
+                        salt,
+                        password,
+                        salt,
+                        accessLevel,
+                        accessPage,
+                        firstName,
+                        lastName,
+                        contentNo,
+                        campusID
+                    )
+                    if (rowsUpdated > 0) {
+                        true
+                    } else {
+                        throw RuntimeException("Failed to add user")
+                    }
+                }
+
+                performInsert()
+
+            }
+        } as Boolean
+    } // end add user
+
+
+
+} // end class

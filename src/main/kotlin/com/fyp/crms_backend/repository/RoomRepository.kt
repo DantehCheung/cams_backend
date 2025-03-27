@@ -4,6 +4,7 @@ import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 
 @Repository
@@ -89,5 +90,31 @@ class RoomRepository(
         } as Boolean // return
 
     } // editRoom
+
+
+    @Transactional
+    fun deleteRoom(CNA:String, roomID: Int): Boolean {
+        return super.APIprocess(CNA,"delete room Data") {
+            val count = jdbcTemplate.queryForObject(
+                """SELECT COUNT(*) FROM Room WHERE roomID = ?""".trimIndent(),
+                Int::class.java,
+                roomID
+            ) ?: 0
+
+            return@APIprocess if (count > 0) {
+                val rows = jdbcTemplate.update(
+                    """UPDATE Room SET state = 'D' WHERE roomID = ? """.trimIndent(),
+                    roomID
+                )
+                if (rows > 0) {
+                    true
+                } else {
+                    false
+                }
+            } else {
+                throw RuntimeException("Room does not exist")
+            }
+        } as Boolean
+    }
 
 } // class

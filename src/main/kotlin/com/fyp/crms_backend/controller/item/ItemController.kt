@@ -2,9 +2,7 @@ package com.fyp.crms_backend.controller.item
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.item.AddItemRequest
-import com.fyp.crms_backend.dto.item.GetItemRequest
-import com.fyp.crms_backend.dto.item.ManualInventoryRequest
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -35,7 +33,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     }
 
     /*
-    @PostMapping("/edititem")
+    @PostMapping("/editdevice")
     fun editItem(
         @RequestBody request: EditItemRequest
     ): Response {
@@ -45,15 +43,16 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     }
 */
 
-    // ItemController.kt
-    @PostMapping("/manualinventory")
-    fun manualInventory(
-        @RequestBody request: ManualInventoryRequest
+    @PostMapping("/deletedevice")
+    fun deleteItem(
+        @RequestBody request: DeleteItemRequest
     ): Response {
-        return process(request) {
-            return@process itemService.processManualInventory(request)
+        return process(request){
+            return@process itemService.deleteItem(request) // cant merge with edit method, different parameters
         }
     }
+
+
 
 
 }

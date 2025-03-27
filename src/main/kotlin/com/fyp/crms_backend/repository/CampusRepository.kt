@@ -3,7 +3,9 @@ package com.fyp.crms_backend.repository
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
+import org.springframework.jdbc.core.queryForObject
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 
 
 @Repository
@@ -105,5 +107,20 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
        } as String
     }
 
+    @Transactional
+    // DELETE
+    fun deleteData(CNA: String, campusID: Int) : Boolean{
+        return super.APIprocess(CNA,"delete Campus Data"){
+            val count = jdbcTemplate.queryForObject("""SELECT COUNT(*) FROM campus WHERE campusID = ? """,Int::class.java,campusID) ?: 0
+
+            return@APIprocess if (count > 0){
+                val rows = jdbcTemplate.update("""UPDATE campus SET state = 'D' WHERE campusID = ?""",campusID)
+                if (rows > 0) true else false
+            }else{
+                throw RuntimeException("Campus does not exist")
+            }
+
+        } as Boolean
+    }
 
 }

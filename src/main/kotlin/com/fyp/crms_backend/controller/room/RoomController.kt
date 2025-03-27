@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
+import com.fyp.crms_backend.dto.room.DeleteRoomRequest
 
 @RestController
 @RequestMapping("/api")
@@ -33,6 +34,13 @@ class RoomController(private val roomService: RoomService) :ApiController(){
     fun EditRoom(@RequestBody request: EditRoomRequest): Response {
         return process(request){
             return@process roomService.editRoom(request)
+        }
+    }
+
+    @PostMapping("/deleteroom")
+    fun DeleteRoom(@RequestBody request: DeleteRoomRequest) : Response {
+        return process(request){
+            return@process roomService.deleteRoom(request)
         }
     }
 

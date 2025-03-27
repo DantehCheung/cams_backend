@@ -3,6 +3,7 @@ package com.fyp.crms_backend.service
 import com.fyp.crms_backend.dto.Request
 import com.fyp.crms_backend.dto.StateResponse
 import com.fyp.crms_backend.dto.login.*
+import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
@@ -59,6 +60,24 @@ class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiSer
 
         return StateResponse(status = status)
 
+    }
+
+    // ADD USER
+    fun addUser(request: AddUserRequest): StateResponse {
+        val data: Claims = decryptToken(request.token) // decrypt token
+        val status: Boolean = userRepository.addUser(
+            data.subject,
+            request.CNA,
+            request.emailDomain,
+            request.password,
+            request.accessLevel,
+            request.firstName,
+            request.lastName,
+            request.contentNo,
+            request.campusID
+        )
+
+        return StateResponse(status = status)
     }
 }
 

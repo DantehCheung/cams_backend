@@ -6,6 +6,7 @@ import com.fyp.crms_backend.dto.login.ChangePwRequest
 import com.fyp.crms_backend.dto.login.LoginByCardRequest
 import com.fyp.crms_backend.dto.login.LoginByPwRequest
 import com.fyp.crms_backend.dto.login.RenewTokenRequest
+import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.service.UserService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.web.bind.annotation.PostMapping
@@ -46,6 +47,14 @@ class UserController(private val userService: UserService) : ApiController() {
     fun changePw(@RequestBody request: ChangePwRequest): Response {
         return process(request) {
             return@process userService.changePw(request)
+        }
+    }
+
+    // ADD USER
+    @PostMapping("/adduser")
+    fun adduser(@RequestBody request: AddUserRequest): Response {
+        return process(request){
+            return@process userService.addUser(request)
         }
     }
 }
