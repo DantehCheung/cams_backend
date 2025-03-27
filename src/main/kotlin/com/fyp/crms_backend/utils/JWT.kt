@@ -33,7 +33,7 @@ class JWT(private val sKey: SKey) {
             .setSubject(user.CNA)
             .claim("accessLevel", user.accessLevel)
             .setIssuedAt(Date())
-            .setExpiration(Date(System.currentTimeMillis() + 300000)) // 5 mins
+            .setExpiration(Date(System.currentTimeMillis() + 3000000)) // 50 mins
             .signWith(SignatureAlgorithm.HS256, sKey.secretKey) //
             .compact()
     }
