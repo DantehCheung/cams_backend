@@ -7,7 +7,7 @@ data class RemandResponse(
 ):Response{
     data class deviceResult(
         val itemID:Int,
-        val state:Boolean
+        var state:Boolean
     )
 
 }

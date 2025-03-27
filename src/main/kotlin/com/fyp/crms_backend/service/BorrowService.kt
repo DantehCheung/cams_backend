@@ -35,13 +35,21 @@ class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : 
 
     fun remand(request: RemandRequest): Response {
         val data: Claims = decryptToken(request.token)
-        val result: List<Boolean> = borrowRepository.remand(data.subject, request.returnList)
-        val results: List<RemandResponse.deviceResult> = request.returnList.zip(result).map { (itemID, state) ->
-            RemandResponse.deviceResult(itemID = itemID, state = state)
-        }
+        val results: List<RemandResponse.deviceResult> = borrowRepository.remand(data.subject, request.returnList)
+
 
         return RemandResponse(
             returnStatus = results
         )
     }
+
+    fun getBorrowList(request: BorrowListRequest): Response {
+        val data: Claims = decryptToken(request.token)
+        val results: List<BorrowListResponse.BorrowRecord> = borrowRepository.getBorrowList(data.subject)
+
+        return BorrowListResponse(
+            borrowRecord = results
+        )
+    }
+
 }
