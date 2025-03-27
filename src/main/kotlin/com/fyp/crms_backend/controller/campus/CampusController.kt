@@ -4,6 +4,7 @@ package com.fyp.crms_backend.controller.campus
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
 import com.fyp.crms_backend.dto.campus.AddCampusRequest
+import com.fyp.crms_backend.dto.campus.DeleteCampusRequest
 import com.fyp.crms_backend.dto.campus.EditCampusRequest
 import com.fyp.crms_backend.dto.campus.GetCampusRequest
 import com.fyp.crms_backend.service.CampusService
@@ -40,6 +41,15 @@ class CampusController(private val campusService: CampusService) : ApiController
     ): Response {
         return process(request) {
             return@process campusService.edit(request)
+        }
+    }
+
+    @PostMapping("/deletecampus")
+    fun DeleteCampuus(
+        @RequestBody request: DeleteCampusRequest
+    ) : Response{
+        return process(request) {
+            return@process campusService.delete(request)
         }
     }
 

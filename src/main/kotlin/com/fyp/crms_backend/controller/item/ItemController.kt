@@ -33,7 +33,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     }
 
     /*
-    @PostMapping("/edititem")
+    @PostMapping("/editdevice")
     fun editItem(
         @RequestBody request: EditItemRequest
     ): Response {
@@ -43,7 +43,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     }
 */
 
-    @PostMapping("/deleteitem")
+    @PostMapping("/deletedevice")
     fun deleteItem(
         @RequestBody request: DeleteItemRequest
     ): Response {

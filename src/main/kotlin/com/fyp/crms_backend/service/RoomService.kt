@@ -1,10 +1,7 @@
 package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.room.AddRoomRequest
-import com.fyp.crms_backend.dto.room.EditRoomRequest
-import com.fyp.crms_backend.dto.room.GetRoomRequest
-import com.fyp.crms_backend.dto.room.GetRoomResponse
+import com.fyp.crms_backend.dto.room.*
 import com.fyp.crms_backend.repository.RoomRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -54,6 +51,18 @@ class RoomService(private val roomRepository: RoomRepository, jwt: JWT) : ApiSer
         val data: Claims = decryptToken(request.token)
 
         val result: Boolean = roomRepository.editRoom(data.subject,request.campusID,request.roomID,request.roomNumber,request.roomName)
+
+        return StateResponse(
+            result
+        )
+    }
+
+
+    // Delete Room
+    fun deleteRoom(request: DeleteRoomRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val result: Boolean = roomRepository.deleteRoom(data.subject,request.roomID)
 
         return StateResponse(
             result

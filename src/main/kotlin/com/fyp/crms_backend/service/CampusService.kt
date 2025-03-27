@@ -1,6 +1,7 @@
 package com.fyp.crms_backend.service
 
 
+import com.fyp.crms_backend.dto.StateResponse
 import com.fyp.crms_backend.dto.campus.*
 import com.fyp.crms_backend.repository.CampusRepository
 import com.fyp.crms_backend.utils.JWT
@@ -56,6 +57,17 @@ class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : 
             campusShortName = request.campusShortName,
             campusName = request.campusName,
             resultState = result
+        )
+    }
+
+    // Delete Campus
+    fun delete(request: DeleteCampusRequest): StateResponse {
+        val data: Claims = decryptToken(request.token) // decrypt the token and get the CNA
+
+        val result: Boolean = campusRepository.deleteData(data.subject,request.campusID)
+
+        return StateResponse(
+            result
         )
     }
 
