@@ -59,6 +59,60 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
         }
     }
 
+    //Manual adjust item
+    fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
+        val scannedRFIDs = request.manualInventoryLists.distinct()
+        val data: Claims = decryptToken(request.token)
+
+        val initialStates = itemRepository.getDeviceStatesByRFIDs(
+            request.roomID,
+            scannedRFIDs
+        )
+
+        val allDevices = itemRepository.getRoomRFIDInfo(request.roomID)
+
+        val updates = allDevices.associate { device ->
+            val newState = when {
+                device.RFID in scannedRFIDs -> when (device.currentState) {
+                    'L', 'M' -> 'A'  // 扫描到的L/M状态转A
+                    else -> device.currentState
+                }
+
+                else -> when (device.currentState) {
+                    in listOf('A', 'S') -> 'M'  // 未扫描的A/S转M
+                    else -> device.currentState
+                }
+            }
+            device.deviceID to newState
+
+        }
+
+        val updatedStates = itemRepository.batchUpdateDeviceStates(updates)
+
+        val unscanned = allDevices.filterNot { it.RFID in scannedRFIDs }
+
+
+        return ManualInventoryResponse(
+            (initialStates.map { device ->
+                ManualInventoryResponse.InventoryItem(
+                    device.deviceName,
+                    device.RFID,
+                    device.currentState,
+                    updatedStates[device.deviceID] ?: 'E'
+                )
+            } + unscanned.map { device ->
+                ManualInventoryResponse.InventoryItem(
+                    device.deviceName,
+                    device.RFID,
+                    device.currentState,
+                    if (device.currentState in listOf('A', 'S', 'R')) 'M' else device.currentState
+                )
+            }).sortedWith(
+                compareByDescending<ManualInventoryResponse.InventoryItem> { it.RFID in scannedRFIDs }
+                    .thenBy { it.afterState }
+            )
+        )
+    }
 }
 
 

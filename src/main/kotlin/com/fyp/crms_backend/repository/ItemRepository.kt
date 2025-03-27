@@ -269,6 +269,7 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
     } as Boolean
 }
 
+
     // Edit
     @Transactional
     fun editItem(CNA: String, deviceID: Int, request: EditItemRequest): Boolean {
@@ -339,4 +340,79 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
         return true
     }
 
+    //Manual Adjust Item
+    data class DeviceStateInfo(
+        val deviceID: Int,
+        val deviceName: String,
+        val currentState: Char,
+        val RFID: String
+    )
+
+    fun getDeviceStatesByRFIDs(roomID: Int, rfids: List<String>): List<DeviceStateInfo> {
+        val sql = """
+        SELECT d.deviceID, d.deviceName, d.state, dr.RFID
+        FROM Device d
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
+        WHERE d.roomID = ? 
+          AND dr.RFID IN (${rfids.joinToString { "?" }})
+          AND d.state != 'D'
+    """
+
+        // Prepare the arguments: roomID first, followed by the RFIDs
+        val args = arrayOf(roomID, *rfids.toTypedArray())
+
+        // Execute the query with the arguments and a row mapper
+        return jdbcTemplate.query(sql, args) { rs, _ ->
+            DeviceStateInfo(
+                deviceID = rs.getInt("deviceID"),
+                deviceName = rs.getString("deviceName"),
+                currentState = rs.getString("state").first(),
+                RFID = rs.getString("RFID")
+            )
+        }
+    }
+
+
+    @Transactional
+    fun batchUpdateDeviceStates(updates: Map<Int, Char>): Map<Int, Char> {
+        val afterStates = mutableMapOf<Int, Char>()
+
+        updates.forEach { (deviceID, newState) ->
+            jdbcTemplate.update(
+                "UPDATE Device SET state = ? WHERE deviceID = ?",
+                newState.toString(),
+                deviceID
+            )
+
+
+            val afterState = jdbcTemplate.queryForObject(
+                "SELECT state FROM Device WHERE deviceID = ?",
+                Char::class.java,
+                deviceID
+            ) ?: 'E'
+
+            afterStates[deviceID] = afterState
+        }
+
+        return afterStates
+    }
+
+    fun getRoomRFIDInfo(roomID: Int): List<DeviceStateInfo> {
+        val sql = """
+        SELECT d.deviceID, d.deviceName, d.state, dr.RFID
+        FROM Device d
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
+        WHERE d.roomID = ? 
+          AND d.state != 'D'
+          AND dr.state = 'A'
+    """
+        return jdbcTemplate.query(sql, arrayOf(roomID)) { rs, _ ->
+            DeviceStateInfo(
+                rs.getInt("deviceID"),
+                rs.getString("deviceName"),
+                rs.getString("state").first(),
+                rs.getString("RFID")
+            )
+        }
+    }
 }
