@@ -8,6 +8,7 @@ import io.jsonwebtoken.Claims
 import org.springframework.stereotype.Service
 
 
+
 @Service
 class HomeService(private val homeRepository: HomeRepository, jwt: JWT) : ApiService(jwt) {
 
@@ -19,10 +20,14 @@ class HomeService(private val homeRepository: HomeRepository, jwt: JWT) : ApiSer
             ?: throw IllegalArgumentException("null")
 
         return HomeResponse(
-            LastLoginTime = repo.lastLoginTime!!.toString(),
-            LastLoginPlace = repo.lastLoginIP!!
+            LastLoginTime = repo.LastLoginTime!!.toString(),
+            LastLoginPlace = repo.LastLoginPlace!!,
+            PendingConfirmItem = repo.PendingConfirmItem
         )
     }
+
+
+
 
 }
 

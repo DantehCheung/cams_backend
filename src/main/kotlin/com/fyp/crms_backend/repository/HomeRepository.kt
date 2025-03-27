@@ -1,9 +1,12 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.dto.home.HomeResponse
+import com.fyp.crms_backend.dto.home.PC
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 
 
 @Repository
@@ -15,19 +18,54 @@ class HomeRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         )
     }
 
-    fun fetchData(CNA: String): CAMSDB.User? {
+    private val rowMapper1 = RowMapper<PC> { rs, _ ->
+        PC(
+            deviceID = rs.getInt("deviceID"),
+            deviceName = rs.getString("deviceName"),
+             price = rs.getBigDecimal("price"),
+        orderDate = rs.getDate("orderDate")?.toLocalDate(),
+        roomID = rs.getInt("roomID"),
+        state = rs.getString("state").toCharArray()[0],
+        remark = rs.getString("remark"),
+        )
+    }
+
+    fun fetchData(CNA:String): HomeResponse {
 
         return super.APIprocess(CNA, "get Home Data") {
-                val result: List<CAMSDB.User> = jdbcTemplate.query(
-                    """SELECT lastLoginTime, lastLoginIP FROM user WHERE CNA = ? """,
-                    rowMapper,
-                    CNA
-                )
+            val result: CAMSDB.User = jdbcTemplate.queryForObject(
+                """
+                SELECT lastLoginTime, lastLoginIP
+                FROM user
+                WHERE CNA = ?
+                """.trimIndent(),
+                rowMapper,
+                CNA
+            ) ?: throw IllegalArgumentException("null")
 
-                return@APIprocess result.firstOrNull()
-        } as CAMSDB.User?
+            val result1: List<PC> = jdbcTemplate.query(
+                """
+                SELECT deviceID, deviceName, price, orderDate, roomID, state, remark
+                FROM device
+                WHERE state = 'S'
+                """.trimIndent(),
+                rowMapper1
+            )
+
+            return@APIprocess HomeResponse(
+                LastLoginTime = result.lastLoginTime!!.toString(),
+                LastLoginPlace = result.lastLoginIP!!,
+                PendingConfirmItem = result1
+            )
+        } as HomeResponse
+
 
     }
+
+
+
+
+
 
 
 }
