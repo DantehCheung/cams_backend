@@ -303,36 +303,51 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 """UPDATE Device SET deviceName = ?, price = ?, orderDate = ?,
             | arriveDate = ?, maintenanceDate = ?, roomID = ?, state = ?, remark = ? 
             | WHERE deviceID = ?""".trimMargin(),
-                deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state, remark, deviceID
+                deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state.toString(), remark, deviceID
             )
 
             if (rowUpdate == 0) {
-                throw IllegalStateException("Update Device not success")
+                throw IllegalStateException("Update Device not success, wrong deviceID or wrong data")
             }
 
-            var docsUpdate: Int = 0
+
+            val docRow = jdbcTemplate.queryForObject(
+                """SELECT COUNT(*) FROM DeviceDoc WHERE deviceID = ?""",
+                Int::class.java,
+                deviceID
+            ) ?: 0
+
+            if(docRow != docs.size){
+                throw IllegalStateException("Update DeviceDoc not success, the number of docs is not match")
+            }
+
 
             docs.forEach { doc ->
-                // Update document
-                val docUpdate: Int = jdbcTemplate.update(
-                    { con ->
-                        val ps = con.prepareStatement(
-                            """UPDATE deviceDoc SET docPath = ?, state = ? WHERE deviceID = ?"""
-                        )
-                        ps.setString(1, doc.docPath)
-                        ps.setString(2, doc.state.toString())
-                        ps.setInt(3, deviceID)
-                        ps
-                    }
-                )
-                if (docUpdate == 0) {
-                    throw IllegalStateException("Update Device doc not success")
-                } else {
-                    docsUpdate = docsUpdate + 1
+
+                val ensurePath = jdbcTemplate.queryForObject(
+                    """SELECT COUNT(*) FROM DeviceDoc WHERE docPath = ?""",
+                    Int::class.java,
+                    doc.docPath
+                ) ?: 0
+
+                if (ensurePath == 0) {
+                    throw IllegalStateException("Update DeviceDoc not success, wrong docPath")
                 }
+
+                // DOC PATH IS PRIMARY KEY, CANNOT BE CHANGED
+                val docUpdate: Int = jdbcTemplate.update(
+                    """UPDATE DeviceDoc SET state = ? WHERE deviceID = ? AND docPath = ?""",
+                    doc.state.toString(), deviceID,doc.docPath
+                )
+
+                // if one of the sql gg will throw error
+                if (docUpdate == 0) {
+                    throw IllegalStateException("Update DeviceDoc not success, wrong state")
+                }
+
             }
 
-            return@APIprocess if (rowUpdate > 0 && docsUpdate == docs.size) {
+            return@APIprocess if (rowUpdate > 0 ) {
                 true
             } else {
                 false
