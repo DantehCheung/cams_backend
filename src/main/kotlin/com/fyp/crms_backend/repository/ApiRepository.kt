@@ -17,6 +17,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
     }
 
     private fun checkPermissions():Boolean{
+        // TODO: Check if the user has the required permissions
         return true
     }
 
