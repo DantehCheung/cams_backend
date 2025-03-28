@@ -180,8 +180,7 @@ WHERE deviceID = ?""",
 
     fun checkReturn(
         CNA: String,
-        RFIDList: List<String>,
-        jdbcTemplate: JdbcTemplate
+        RFIDList: List<String>
     ): CheckReturnResponse {
         // 1. 按 deviceID 分組 RFID 並驗證零件完整性
         val deviceGroups = validateRFIDs(RFIDList)

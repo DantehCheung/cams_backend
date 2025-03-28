@@ -30,7 +30,7 @@ public class BorrowController(private val borrowService: BorrowService) : ApiCon
         }
     }
 
-    @PostMapping("/remand")
+    @PostMapping("/return")
     fun remand(
         @RequestBody request: RemandRequest
     ): Response {
@@ -38,5 +38,20 @@ public class BorrowController(private val borrowService: BorrowService) : ApiCon
             return@process borrowService.remand(request)
         }
     }
+    @PostMapping("/getborrowrecord")
+    fun getborrowRecord(@RequestBody request: BorrowListRequest): Response {
+        return process(request){
+            return@process borrowService.getBorrowList(request)
+        }
+    }
+
+
+    @PostMapping("/check")
+    fun check(@RequestBody request: CheckReturnRequest): Response {
+        return process(request){
+            return@process borrowService.checkReturn(request)
+        }
+    }
+
 
 }

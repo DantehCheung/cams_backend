@@ -2,10 +2,7 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.dto.Response
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.borrow.BorrowRequest
-import com.fyp.crms_backend.dto.borrow.RemandRequest
-import com.fyp.crms_backend.dto.borrow.RemandResponse
-import com.fyp.crms_backend.dto.borrow.ReservationRequest
+import com.fyp.crms_backend.dto.borrow.*
 import com.fyp.crms_backend.repository.BorrowRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -50,6 +47,13 @@ class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : 
         return BorrowListResponse(
             borrowRecord = results
         )
+    }
+
+    fun checkReturn(request: CheckReturnRequest): Response {
+        val data: Claims = decryptToken(request.token)
+        val response:CheckReturnResponse = borrowRepository.checkReturn(data.subject,request.RFIDList)
+
+        return response
     }
 
 }
