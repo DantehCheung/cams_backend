@@ -4,6 +4,8 @@ import com.fyp.crms_backend.dto.item.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.time.LocalDate
 
 
 @Repository
@@ -269,76 +271,76 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
     } as Boolean
 }
 
+    // Edit device (big)
+    fun editItem(
+        CNA: String, deviceID: Int, deviceName: String, price: BigDecimal, orderDate: LocalDate, arriveDate: LocalDate,
+        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String, docs: List<UpdatedDeviceDoc>
+    ): Boolean {
 
-    // Edit
-    @Transactional
-    fun editItem(CNA: String, deviceID: Int, request: EditItemRequest): Boolean {
-        // Verify device exists.
-        val count = jdbcTemplate.queryForObject(
-            """SELECT COUNT(1) FROM Device WHERE deviceID = ?""",
-            Int::class.java,
-            deviceID
-        ) ?: 0
+        return super.APIprocess(CNA, "editData") {
 
-        if (count == 0) {
-            throw IllegalStateException("Device not found")
-        }
-
-        // Update Device record.
-        jdbcTemplate.update(
-            """UPDATE Device
-               SET deviceName = ?,
-                   price = ?,
-                   orderDate = ?,
-                   arriveDate = ?,
-                   maintenanceDate = ?,
-                   roomID = ?,
-                   state = ?,
-                   remark = ?
-               WHERE deviceID = ?""",
-            request.deviceName,
-            request.price,
-            request.orderDate,
-            request.arriveDate,
-            request.maintenanceDate,
-            request.roomID,
-            request.state.toString(),
-            request.remark,
-            deviceID
-        )
-
-        // Update document records.
-        request.docs.forEach { doc ->
-            jdbcTemplate.update(
-                """UPDATE DeviceDoc SET docPath = ? 
-                   WHERE deviceDocID = ? AND deviceID = ?""",
-                doc.docPath,
-                doc.deviceDocID,
+            // Verify that the device exists and is not already marked as deleted.
+            val devicecount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ?""",
+                Int::class.java,
                 deviceID
-            )
-        }
+            ) ?: 0
 
-        // Update device part and associated RFID records.
-        request.deviceParts.forEach { part ->
-            jdbcTemplate.update(
-                """UPDATE DevicePart SET devicePartName = ? 
-                   WHERE devicePartID = ? AND deviceID = ?""",
-                part.devicePartName,
-                part.devicePartID,
-                deviceID
-            )
-            part.deviceRFID.forEach { rfid ->
-                jdbcTemplate.update(
-                    """UPDATE DeviceRFID SET RFID = ? 
-                       WHERE deviceRFIDID = ? AND deviceID = ?""",
-                    rfid.RFID,
-                    rfid.deviceRFIDID,
-                    deviceID
-                )
+            if (devicecount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
             }
-        }
-        return true
+
+            val roomcount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Room WHERE roomID = ?""", Int::class.java,
+                roomID
+            ) ?: 0
+
+            if (roomcount == 0) {
+                throw IllegalStateException("Room not found")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE Device SET deviceName = ?, price = ?, orderDate = ?,
+            | arriveDate = ?, maintenanceDate = ?, roomID = ?, state = ?, remark = ? 
+            | WHERE deviceID = ?""".trimMargin(),
+                deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state, remark, deviceID
+            )
+
+            if (rowUpdate == 0) {
+                throw IllegalStateException("Update Device not success")
+            }
+
+            var docsUpdate: Int = 0
+
+            docs.forEach { doc ->
+                // Update document
+                val docUpdate: Int = jdbcTemplate.update(
+                    { con ->
+                        val ps = con.prepareStatement(
+                            """UPDATE deviceDoc SET docPath = ?, state = ? WHERE deviceID = ?"""
+                        )
+                        ps.setString(1, doc.docPath)
+                        ps.setString(2, doc.state.toString())
+                        ps.setInt(3, deviceID)
+                        ps
+                    }
+                )
+                if (docUpdate == 0) {
+                    throw IllegalStateException("Update Device doc not success")
+                } else {
+                    docsUpdate = docsUpdate + 1
+                }
+            }
+
+            return@APIprocess if (rowUpdate > 0 && docsUpdate == docs.size) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
     }
+
+
 
     //Manual Adjust Item
     data class DeviceStateInfo(
