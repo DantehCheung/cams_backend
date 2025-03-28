@@ -6,5 +6,5 @@ import java.time.LocalDate
 data class ReservationRequest(
     val token: String,
     val itemID:Int,
-    val borrowRecordID: LocalDate
+    val borrowRecordDate: LocalDate
 ):Request

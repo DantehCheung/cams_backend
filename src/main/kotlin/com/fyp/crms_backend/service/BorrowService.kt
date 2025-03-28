@@ -14,7 +14,7 @@ class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : 
     fun reservation(request: ReservationRequest): Response {
         val data: Claims = decryptToken(request.token)
 
-        val result: Boolean = borrowRepository.reservation(data.subject,request.itemID, request.borrowRecordID)
+        val result: Boolean = borrowRepository.reservation(data.subject, request.itemID, request.borrowRecordDate)
         return StateResponse(
             status = result
         )
@@ -42,7 +42,8 @@ class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : 
 
     fun getBorrowList(request: BorrowListRequest): Response {
         val data: Claims = decryptToken(request.token)
-        val results: List<BorrowListResponse.BorrowRecord> = borrowRepository.getBorrowList(data.subject)
+        val results: List<BorrowListResponse.BorrowRecord> =
+            borrowRepository.getBorrowList(data.subject, request.targetCNA, request.borrowDateAfter, request.returned)
 
         return BorrowListResponse(
             borrowRecord = results

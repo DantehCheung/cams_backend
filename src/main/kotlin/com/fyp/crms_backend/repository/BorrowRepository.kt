@@ -4,7 +4,6 @@ import com.fyp.crms_backend.dto.borrow.BorrowListResponse
 import com.fyp.crms_backend.dto.borrow.CheckReturnResponse
 import com.fyp.crms_backend.dto.borrow.RemandResponse
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.query
 import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -31,17 +30,17 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
             }
 
             val result: Int = jdbcTemplate.update(
-                """INSERT INTO `cams`.`deviceborrowrecord`
+                """INSERT INTO deviceborrowrecord
                         (
-                        `borrowDate`,
-                        `deviceID`,
-                        `borrowUserCNA`,
-                        `leasePeriod`)
-                        VALUES
+                        borrowDate,
+                        deviceID,
+                        borrowUserCNA,
+                        leasePeriod)
+                        VALUES(
                         ?,
                         ?,
                         ?,
-                        ?)""",
+                        ?)""".trimIndent(),
                 borrowDate, itemID, CNA, borrowDate.plusDays(14)
             )
 
@@ -63,7 +62,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
             jdbcTemplate.update(
                 """UPDATE device
                     SET state = 'L'
-                    WHERE deviceID = ?""",
+                    WHERE deviceID = ?""".trimIndent(),
                 itemID
             )
             return@APIprocess result > 0
@@ -85,7 +84,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                     """INSERT INTO devicereturnrecord (borrowRecordID)
 SELECT borrowRecordID
 FROM deviceborrowrecord
-WHERE deviceID = ?""",
+WHERE deviceID = ?""".trimIndent(),
                     itemID
                 )
                 stateList.find { it.itemID == itemID }?.state = result > 0
@@ -118,42 +117,48 @@ WHERE deviceID = ?""",
     ): List<BorrowListResponse.BorrowRecord> {
         return super.APIprocess(CNA, "getBorrowList") {
 
-                val query = """
-        SELECT
-            br.borrowRecordID,
-            br.borrowDate,
-            br.leasePeriod,
-            d.deviceID,
-            d.deviceName,
-            u.CNA AS borrowerCNA,
-            u.firstName AS borrowerFirstName,
-            u.lastName AS borrowerLastName,
-            rr.returnDate,
-            c.checkDT AS checkDate,
-            inspector.CNA AS inspectorCNA,
-            inspector.firstName AS inspectorFirstName,
-            inspector.lastName AS inspectorLastName,
-            r.roomNumber,
-            r.roomName,
-            camp.campusShortName
-        FROM DeviceBorrowRecord br
-        INNER JOIN Device d ON br.deviceID = d.deviceID
-        INNER JOIN User u ON br.borrowUserCNA = u.CNA
-        LEFT JOIN DeviceReturnRecord rr ON br.borrowRecordID = rr.borrowRecordID
-        LEFT JOIN CheckDeviceReturnRecord c ON rr.checkRecordID = c.checkRecordID
-        LEFT JOIN User inspector ON c.inspector = inspector.CNA
-        INNER JOIN Room r ON d.roomID = r.roomID
-        INNER JOIN Campus camp ON r.campusID = camp.campusID
-        WHERE (:CNA IS NULL OR u.CNA = :CNA)
-          AND br.borrowDate >= :borrowDateAfter
-          AND (:returned = (rr.borrowRecordID IS NOT NULL))
-    """.trimIndent()
+            val query = """
+    SELECT
+        br.borrowRecordID,
+        br.borrowDate,
+        br.leasePeriod,
+        d.deviceID,
+        d.deviceName,
+        u.CNA AS borrowerCNA,
+        u.firstName AS borrowerFirstName,
+        u.lastName AS borrowerLastName,
+        rr.returnDate,
+        c.checkDT AS checkDate,
+        inspector.CNA AS inspectorCNA,
+        inspector.firstName AS inspectorFirstName,
+        inspector.lastName AS inspectorLastName,
+        r.roomNumber,
+        r.roomName,
+        camp.campusShortName
+    FROM DeviceBorrowRecord br
+    INNER JOIN Device d ON br.deviceID = d.deviceID
+    INNER JOIN User u ON br.borrowUserCNA = u.CNA
+    LEFT JOIN DeviceReturnRecord rr ON br.borrowRecordID = rr.borrowRecordID
+    LEFT JOIN CheckDeviceReturnRecord c ON rr.checkRecordID = c.checkRecordID
+    LEFT JOIN User inspector ON c.inspector = inspector.CNA
+    INNER JOIN Room r ON d.roomID = r.roomID
+    INNER JOIN Campus camp ON r.campusID = camp.campusID
+    WHERE (? IS NULL OR u.CNA = ?)  -- Fixed column name and parameter
+      AND br.borrowDate >= ?
+      AND (
+        (? = TRUE AND rr.borrowRecordID IS NOT NULL) OR  -- Explicit boolean handling
+        (? = FALSE AND rr.borrowRecordID IS NULL))
+    ORDER BY br.borrowDate DESC
+""".trimIndent()
 
                 // Execute query using JDBC or Exposed framework
-                return@APIprocess jdbcTemplate.query(query, mapOf(
-                    "CNA" to targetCNA,
-                    "borrowDateAfter" to borrowDateAfter,
-                    "returned" to returned
+            return@APIprocess jdbcTemplate.query(
+                query, arrayOf<Any?>( // Use arrayOf<Any?> to handle nulls
+                    targetCNA,
+                    targetCNA,
+                    borrowDateAfter,
+                    returned,
+                    returned
                 )) { rs, _ ->
                     BorrowListResponse.BorrowRecord(
                         borrowRecordID = rs.getInt("borrowRecordID"),
@@ -256,7 +261,8 @@ WHERE deviceID = ?""",
             SET drr.checkRecordID = ?
             WHERE dbr.deviceID = ?
             AND drr.checkRecordID IS NULL
-        """, checkRecordId, deviceId)
+        """.trimIndent(), checkRecordId, deviceId
+            )
         }
     }
 

@@ -120,7 +120,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
             throw e
         } catch (e: Exception) {
             // Generic error handler (e.g., unexpected exceptions)
-            val logAdded = addLog(CNA, "fail: $logMsg with (${e.message})")
+            val logAdded = addLog(CNA, "fail: $logMsg with (${e.message?.replace(Regex(" +"), " ")})")
 
             if (!logAdded) {
                 throw errorProcess("E05") // Database connection or query error
