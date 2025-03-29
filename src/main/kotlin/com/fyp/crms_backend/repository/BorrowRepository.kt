@@ -17,7 +17,7 @@ import java.time.temporal.ChronoUnit
 class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     val MAX_LOAN_DAYS = 30
 
-    private fun checkBookingAvailable(itemID: Int, startDate: LocalDate): Boolean {
+    private fun checkBookingAvailable(itemID: Int, startDate: LocalDate, endDate: LocalDate? = null): Boolean {
         return try {
             // 1. 檢查設備基礎狀態
             val deviceState = jdbcTemplate.queryForObject(
@@ -26,8 +26,8 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                 String::class.java
             ) ?: return false
 
-            // 僅允許在可借出狀態（A）或預留狀態（R）下預訂
-            if (deviceState !in listOf("A", "R")) return false
+            // 僅允許在ARLE狀態下預訂
+            if (deviceState !in listOf("A", "R","L","E")) return false
 
             // 2. 檢查時間衝突
             val conflictCount = jdbcTemplate.queryForObject(
@@ -41,11 +41,46 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                 AND br.borrowDate <= ?
             )
             """,
-                arrayOf(itemID, startDate, startDate.plusDays(14)),
+                arrayOf(itemID, startDate, endDate?: startDate.plusDays(14)),
                 Int::class.java
             ) ?: 0
 
             conflictCount == 0
+        } catch (e: EmptyResultDataAccessException) {
+            false  // 設備不存在
+        }
+    }
+
+    private fun checkBorrowAvailable(CNA: String, itemID: Int): Boolean {
+        return try {
+            // 1. 檢查設備基礎狀態
+            val (deviceState, reservedBy) = jdbcTemplate.queryForObject(
+                """
+            SELECT d.state, br.borrowUserCNA 
+            FROM Device d
+            LEFT JOIN DeviceBorrowRecord br 
+              ON d.deviceID = br.deviceID 
+              AND br.borrowRecordID = (
+                  SELECT MAX(borrowRecordID) 
+                  FROM DeviceBorrowRecord 
+                  WHERE deviceID = d.deviceID
+              )
+            WHERE d.deviceID = ?
+            """,
+                arrayOf(itemID)
+            ) { rs, _ ->
+                rs.getString("state") to rs.getString("borrowUserCNA")
+            } ?: return false
+
+            // 2. 狀態驗證
+            when (deviceState) {
+                "A" -> false  // 可借出狀態直接允許
+                "R" -> {
+                    // 檢查預留人是否為當前用戶
+                    reservedBy == CNA
+                }
+                else -> throw IllegalStateException("This device is not allow to be borrowed") // 其他狀態不允許借出
+            }
         } catch (e: EmptyResultDataAccessException) {
             false  // 設備不存在
         }
@@ -68,8 +103,18 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         }
     }
 
+    private fun checkEndDate(startDate:LocalDate,endDate: LocalDate) {
+        if (startDate > endDate) {
+            throw IllegalArgumentException("The start date should not be later than the end date")
+        }
+        val daysBetween = ChronoUnit.DAYS.between(startDate, endDate)
+        if (daysBetween > MAX_LOAN_DAYS) {
+            throw IllegalArgumentException("The loan period should not exceed $MAX_LOAN_DAYS days")
+        }
+    }
+
     @Transactional
-    fun reservationSQL(CNA: String, itemID: Int, borrowDate: LocalDate): Boolean {
+    fun reservationSQL(CNA: String, itemID: Int, borrowDate: LocalDate, endDate: LocalDate? = null): Boolean {
         // 1. 插入借閱記錄
         val insertResult = jdbcTemplate.update(
             """
@@ -77,7 +122,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         (borrowDate, deviceID, borrowUserCNA, leasePeriod)
         VALUES (?, ?, ?, ?)
         """,
-            borrowDate, itemID, CNA, borrowDate.plusDays(14)
+            borrowDate, itemID, CNA, endDate?:borrowDate.plusDays(14)
         )
         if (borrowDate == LocalDate.now()) {
             // 2. 更新設備狀態為借出（L）
@@ -90,13 +135,16 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         return insertResult > 0
     }
 
-    fun reservation(CNA: String, itemID: Int, borrowDate: LocalDate): Boolean {
+    fun reservation(CNA: String, itemID: Int, borrowDate: LocalDate, endDate: LocalDate? = null): Boolean {
         return super.APIprocess(CNA, "reservation") {
-            if (!checkBookingAvailable(itemID, borrowDate)) {
+            if (endDate != null) {
+                checkEndDate(borrowDate,endDate)
+            }
+            if (!checkBookingAvailable(itemID, borrowDate,endDate)) {
                 return@APIprocess false
             }
 
-            return@APIprocess reservationSQL(CNA, itemID, borrowDate)
+            return@APIprocess reservationSQL(CNA, itemID, borrowDate,endDate)
         } as Boolean
 
     }
@@ -127,15 +175,22 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
 
     fun borrow(CNA: String, itemID: Int, endDate: LocalDate? = null): Boolean {
         return super.APIprocess(CNA, "borrow") {
-            if (!checkBookingAvailable(itemID, LocalDate.now())) {
-                return@APIprocess false
+            if (checkBorrowAvailable(CNA,itemID)) {
+                if (endDate != null) {
+                    throw IllegalArgumentException("The Device is not available for borrowing")
+                }
+                jdbcTemplate.update(
+                    """UPDATE device
+                    SET state = 'L'
+                    WHERE deviceID = ?""".trimIndent(),
+                    itemID
+                )
+                return@APIprocess true
             }
             if (endDate != null) {
-                val daysBetween = ChronoUnit.DAYS.between(LocalDate.now(), endDate)
-                if (daysBetween > MAX_LOAN_DAYS) {
-                    throw IllegalArgumentException("The loan period should not exceed $MAX_LOAN_DAYS days")
-                }
+                checkEndDate(LocalDate.now(),endDate)
             }
+
 
             return@APIprocess borrowSQL(CNA, itemID,endDate)
         } as Boolean

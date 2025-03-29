@@ -43,3 +43,4 @@ out/
 */.*
 
 local.properties
+*src/main/resources/application.yml
