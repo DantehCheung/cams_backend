@@ -105,11 +105,11 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
 
     private fun checkEndDate(startDate:LocalDate,endDate: LocalDate) {
         if (startDate > endDate) {
-            throw IllegalArgumentException("The start date should not be later than the end date")
+            throw RuntimeException("The start date should not be later than the end date")
         }
         val daysBetween = ChronoUnit.DAYS.between(startDate, endDate)
         if (daysBetween > MAX_LOAN_DAYS) {
-            throw IllegalArgumentException("The loan period should not exceed $MAX_LOAN_DAYS days")
+            throw RuntimeException("The loan period should not exceed $MAX_LOAN_DAYS days")
         }
     }
 
@@ -177,7 +177,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         return super.APIprocess(CNA, "borrow") {
             if (checkBorrowAvailable(CNA,itemID)) {
                 if (endDate != null) {
-                    throw IllegalArgumentException("The Device is not available for borrowing")
+                    throw RuntimeException("The Device is not available for borrowing")
                 }
                 jdbcTemplate.update(
                     """UPDATE device
@@ -320,7 +320,7 @@ WHERE deviceID = ?""".trimIndent(),
     private fun validateRFIDs(
         RFIDList: List<String>
     ): Map<Int, Set<Int>> {
-        if (RFIDList.isEmpty()) throw IllegalArgumentException("RFID 列表不能为空")
+        if (RFIDList.isEmpty()) throw RuntimeException("RFID 列表不能为空")
 
         // 查询所有有效 RFID 对应的设备与零件
         val rfidInfo = jdbcTemplate.query(
@@ -333,7 +333,7 @@ WHERE deviceID = ?""".trimIndent(),
             rs.getInt("deviceID") to rs.getInt("devicePartID")
         }
 
-        if (rfidInfo.isEmpty()) throw IllegalArgumentException("无有效的 RFID")
+        if (rfidInfo.isEmpty()) throw RuntimeException("无有效的 RFID")
 
         // 按 deviceID 分组并验证每个设备的零件完整性
         return rfidInfo.groupBy { it.first }.mapValues { (deviceId, parts) ->
@@ -344,7 +344,7 @@ WHERE deviceID = ?""".trimIndent(),
             ).toSet()
 
             if (existingParts != requiredParts) {
-                throw IllegalArgumentException("设备 $deviceId 零件不齐，缺少部件: ${requiredParts - existingParts}")
+                throw RuntimeException("设备 $deviceId 零件不齐，缺少部件: ${requiredParts - existingParts}")
             }
             existingParts
         }
