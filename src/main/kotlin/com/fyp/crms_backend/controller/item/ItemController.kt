@@ -42,6 +42,14 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
+    @PostMapping("/updateitempart")
+    fun editItemPart(
+        @RequestBody request: EditItemPartRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.editItemPart(request)
+        }
+    }
 
     @PostMapping("/deleteitem")
     fun deleteItem(

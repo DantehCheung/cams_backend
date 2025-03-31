@@ -356,6 +356,34 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
     }
 
 
+    fun editItemPart(CNA:String, deviceID: Int, partID: Int, partName: String, state: Char): Boolean {
+        return super.APIprocess(CNA, "editData") {
+            // Verify that the device exists and is not already marked as deleted.
+            val devicecount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND partID = ?""",
+                Int::class.java,
+                deviceID,
+                partID
+            ) ?: 0
+
+            if (devicecount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DevicePart SET devicePartName = ?, state = ? WHERE deviceID = ? AND devicePartID = ?""",
+                partName, state.toString(), deviceID, partID
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
+
 
     //Manual Adjust Item
     data class DeviceStateInfo(
