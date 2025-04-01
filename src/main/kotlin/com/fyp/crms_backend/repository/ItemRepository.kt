@@ -12,16 +12,24 @@ import java.time.LocalDate
 class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
 
 
-    fun fetchData(CNA: String, roomID: Int): GetItemResponse {
+    fun fetchData(CNA: String, roomID: Int, stateList: List<String>? = null): GetItemResponse {
         return super.APIprocess(CNA, "get device") {
-            val sqlDevices = """
-        SELECT * 
-        FROM Device 
-        WHERE roomID = ?
+            var sqlDevices = """
+SELECT * 
+FROM Device 
+WHERE roomID = ?
     """
+            if (stateList != null && stateList.isNotEmpty()) {
+                val placeholders = stateList.joinToString(",") { "?" }
+                sqlDevices += " AND state IN ($placeholders)"
+            }
+            val parameters = mutableListOf<Any>().apply {
+                add(roomID) // Add the roomID parameter
+                stateList?.let { addAll(it) } // Add stateList elements if not null
+            }.toTypedArray() // Convert to array
 
             // Fetch devices
-            val devices: List<GetItemResponse.Devices> = jdbcTemplate.query(sqlDevices, arrayOf(roomID)) { rs, _ ->
+            val devices: List<GetItemResponse.Devices> = jdbcTemplate.query(sqlDevices, parameters) { rs, _ ->
                 GetItemResponse.Devices(
                     deviceID = rs.getInt("deviceID"),
                     deviceName = rs.getString("deviceName"),
@@ -47,7 +55,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
             val sql = """
                 SELECT *
                 FROM DeviceDoc
-                WHERE deviceID = ?
+                WHERE deviceID = ? and state = 'A'
             """
             jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DeviceDoc(
@@ -63,7 +71,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
             val sql = """
                 SELECT *
                 FROM DevicePart
-                WHERE deviceID = ?
+                WHERE deviceID = ? and state = 'A'
             """
             jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DevicePartID(
@@ -80,7 +88,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
             val sql = """
                 SELECT *
                 FROM DeviceRFID
-                WHERE deviceID = ?
+                WHERE deviceID = ? and state = 'A'
             """
             jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DeviceRFID(
@@ -95,7 +103,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     private fun fetchDeviceDocs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceDoc>> {
         return super.APIprocess("fetchDeviceDocs", "fetch multiple device documents") {
             jdbcTemplate.query(
-                """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()})"""
+                """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()} ) and state = 'A'"""
             ) { rs, _ ->
                 GetItemResponse.DeviceDoc(
                     deviceID = rs.getInt("deviceID"),
@@ -114,7 +122,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                         devicePartID,
                         devicePartName
                     FROM devicePartID
-                    WHERE deviceID IN (${deviceIDs.joinToString()})
+                    WHERE deviceID IN (${deviceIDs.joinToString()}) and state = 'A'
                 """
             ) { rs, _ ->
                 GetItemResponse.DevicePartID(
@@ -135,7 +143,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                         devicePartID,
                         RFID
                     FROM deviceRFID
-                    WHERE deviceID IN (${deviceIDs.joinToString()})
+                    WHERE deviceID IN (${deviceIDs.joinToString()}) and state = 'A'
                 """
             ) { rs, _ ->
                 GetItemResponse.DeviceRFID(
@@ -412,9 +420,45 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
         val RFID: String
     )
 
+    data class ManualItemList(
+        val initialStates: List<ItemRepository.DeviceStateInfo>,
+        val allDevices: List<ItemRepository.DeviceStateInfo>,
+        val updatedStates: Map<Int, Char>
+    )
 
-    fun getDeviceStatesByRFIDs(roomID: Int, rfids: List<String>): List<DeviceStateInfo> {
-        return super.APIprocess("getDeviceStatesByRFIDs", "get device states by RFIDs") {
+    fun ManualInventoryFunction(CNA: String, roomID: Int, scannedRFIDs: List<String>): ManualItemList {
+        return super.APIprocess(CNA, "Manual Inventory") {
+
+            val initialStates = this.getDeviceStatesByRFIDs(
+                roomID,
+                scannedRFIDs
+            )
+
+            val allDevices = this.getRoomRFIDInfo(roomID)
+
+            val updates = allDevices.associate { device ->
+                val newState = when {
+                    device.RFID in scannedRFIDs -> when (device.currentState) {
+                        'L', 'M' -> 'A'  // 扫描到的L/M状态转A
+                        else -> device.currentState
+                    }
+
+                    else -> when (device.currentState) {
+                        in listOf('A', 'S') -> 'M'  // 未扫描的A/S转M
+                        else -> device.currentState
+                    }
+                }
+                device.deviceID to newState
+
+            }
+
+            val updatedStates = this.batchUpdateDeviceStates(updates)
+            return@APIprocess ManualItemList(initialStates, allDevices, updatedStates)
+        } as ManualItemList
+    }
+
+    private fun getDeviceStatesByRFIDs(roomID: Int, rfids: List<String>): List<DeviceStateInfo> {
+
             val sql = """
                 SELECT d.deviceID, d.deviceName, d.state, dr.RFID
                 FROM Device d
@@ -423,9 +467,9 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                   AND dr.RFID IN (${rfids.joinToString { "?" }})
                   AND d.state != 'D'
             """
-
             // Prepare the arguments: roomID first, followed by the RFIDs
             val args = arrayOf(roomID, *rfids.toTypedArray())
+
 
             // Execute the query with the arguments and a row mapper
             jdbcTemplate.query(sql, args) { rs, _ ->
@@ -436,16 +480,27 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                     RFID = rs.getString("RFID")
                 )
             }
-        } as List<DeviceStateInfo>
+
+        val result = jdbcTemplate.query(sql, args) { rs, _ ->
+            DeviceStateInfo(
+                deviceID = rs.getInt("deviceID"),
+                deviceName = rs.getString("deviceName"),
+                currentState = rs.getString("state").first(),
+                RFID = rs.getString("RFID")
+            )
+        }
+        return result
+
     }
 
 
     @Transactional
-    fun batchUpdateDeviceStates(updates: Map<Int, Char>): Map<Int, Char> {
-        return super.APIprocess("batchUpdateDeviceStates", "batch update device states") {
+    private fun batchUpdateDeviceStates(updates: Map<Int, Char>): Map<Int, Char> {
+
             val afterStates = mutableMapOf<Int, Char>()
 
             updates.forEach { (deviceID, newState) ->
+
                 jdbcTemplate.update(
                     "UPDATE Device SET state = ? WHERE deviceID = ?",
                     newState.toString(),
@@ -461,13 +516,11 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 afterStates[deviceID] = afterState
             }
 
-            afterStates
-        } as Map<Int, Char>
+        return afterStates
     }
 
-    fun getRoomRFIDInfo(roomID: Int): List<DeviceStateInfo> {
-        return super.APIprocess("getRoomRFIDInfo", "get room RFID info") {
-            val sql = """
+    private fun getRoomRFIDInfo(roomID: Int): List<DeviceStateInfo> {
+        val sql = """
                 SELECT d.deviceID, d.deviceName, d.state, dr.RFID
                 FROM Device d
                 JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
@@ -475,14 +528,14 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                   AND d.state != 'D'
                   AND dr.state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(roomID)) { rs, _ ->
-                DeviceStateInfo(
-                    rs.getInt("deviceID"),
-                    rs.getString("deviceName"),
-                    rs.getString("state").first(),
-                    rs.getString("RFID")
-                )
-            }
-        } as List<DeviceStateInfo>
+        return jdbcTemplate.query(sql, arrayOf(roomID)) { rs, _ ->
+            DeviceStateInfo(
+                rs.getInt("deviceID"),
+                rs.getString("deviceName"),
+                rs.getString("state").first(),
+                rs.getString("RFID")
+            )
+        }
+
     }
 }

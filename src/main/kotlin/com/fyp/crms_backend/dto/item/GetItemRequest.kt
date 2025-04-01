@@ -4,5 +4,6 @@ import com.fyp.crms_backend.dto.Request
 
 data class GetItemRequest(
     val token: String,
-    val roomID: Int
+    val roomID: Int,
+    val stateList: List<String>? = null
 ) : Request
