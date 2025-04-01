@@ -66,6 +66,21 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
         )
         }
 
+    // Edit Item Part
+    fun editItemPart(request: EditItemPartRequest): StateResponse{
+
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.editItemPart(
+            data.subject,request.deviceID,request.partID,request.partName,request.state
+        )
+
+        return StateResponse(
+            repo
+        )
+
+    }
+
 
     //Manual adjust item
     fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
