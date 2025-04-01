@@ -126,7 +126,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
             if (!logAdded) {
                 throw errorProcess("E05") // Database connection or query error
             }
-            throw errorProcess("E06")
+            throw e
         }
     }
 

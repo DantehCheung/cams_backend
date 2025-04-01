@@ -50,14 +50,22 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiSer
     }
 
     // Edit Item
-    @Service
-    class EditItemService(private val itemRepository: ItemRepository) {
 
-        fun editItem(request: EditItemRequest, deviceID: Int): Boolean {
+    fun editItem(request: EditItemRequest): StateResponse {
             // The token in EditItemRequest is used as CNA.
-            return itemRepository.editItem(request.token, deviceID, request)
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.editItem(
+            data.subject, request.deviceID, request.deviceName,
+            request.price, request.orderDate, request.arriveDate, request.maintenanceDate, request.roomID,
+            request.state, request.remark, request.docs
+        )
+
+        return StateResponse(
+            repo
+        )
         }
-    }
+
 
     //Manual adjust item
     fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
