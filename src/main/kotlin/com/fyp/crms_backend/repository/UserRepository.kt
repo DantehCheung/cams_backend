@@ -28,51 +28,67 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         )
     }
 
-    fun findByCNAAndPassword(CNA: String, password: String, ipAddress: String): CAMSDB.User? {
-        return super.APIprocess(CNA, "login by pw in ip: $ipAddress") {
-            val users = jdbcTemplate.query(
-                """SELECT * 
+    fun findByCNAAndPassword(CNA: String, domainPart: String?, password: String, ipAddress: String): CAMSDB.User? {
+        return super.APIprocess(CNA, "login by username/pw in ip: $ipAddress") {
+
+
+            // Build SQL query based on email/CNA
+            val (sql, params) = if (domainPart != null) {
+                """
+            SELECT * 
+            FROM user 
+            WHERE CNA = ? 
+              AND emailDomain = ?
+              AND password = CONCAT('0', SHA2(CONCAT(?, (SELECT salt FROM user WHERE CNA = ?)), 256))
+            """ to listOf(CNA, domainPart, password, CNA)
+            } else {
+                """
+            SELECT * 
             FROM user 
             WHERE CNA = ? 
               AND password = CONCAT('0', SHA2(CONCAT(?, (SELECT salt FROM user WHERE CNA = ?)), 256))
-            """,
-                rowMapper,
-                CNA, password, CNA
-            )
+            """ to listOf(CNA, password, CNA)
+            }
+
+            val users = jdbcTemplate.query(sql, rowMapper, *params.toTypedArray())
             val user = users.firstOrNull()
+
             if (user == null) {
-                val fuser = jdbcTemplate.query(
-                    """SELECT * 
-            FROM user 
-            WHERE CNA = ?
-            """,
-                    rowMapper,
-                    CNA
-                ).firstOrNull()
-                if (fuser == null) {
-                    throw super.errorProcess("E07")
-                } else if (fuser.loginFail!! >= 10) {
-                    jdbcTemplate.update(
-                        """UPDATE user SET lastLoginIP = ?,loginFail = loginFail +1, password = CONCAT('!', SUBSTRING(password, 2)) WHERE CNA = ?""",
-                        ipAddress,
-                        CNA
-                    )
+                // Check if user exists to determine invalid credentials
+                val fuser = if (domainPart != null) {
+                    jdbcTemplate.query(
+                        "SELECT * FROM user WHERE CNA = ? AND emailDomain = ?",
+                        rowMapper,
+                        CNA, domainPart
+                    ).firstOrNull()
                 } else {
-                    jdbcTemplate.update(
-                        """UPDATE user SET lastLoginIP = ?,loginFail = loginFail +1 WHERE CNA = ?""",
-                        ipAddress,
+                    jdbcTemplate.query(
+                        "SELECT * FROM user WHERE CNA = ?",
+                        rowMapper,
                         CNA
-                    )
+                    ).firstOrNull()
                 }
-                throw errorProcess("E07")
+
+                if (fuser == null) {
+                    throw errorProcess("E07") // User not found
+                } else {
+                    // Increment loginFail and block if >=10 attempts
+                    val updateQuery = if (fuser.loginFail!! >= 10) {
+                        "UPDATE user SET lastLoginIP = ?, loginFail = loginFail + 1, password = CONCAT('!', SUBSTRING(password, 2)) WHERE CNA = ?"
+                    } else {
+                        "UPDATE user SET lastLoginIP = ?, loginFail = loginFail + 1 WHERE CNA = ?"
+                    }
+                    jdbcTemplate.update(updateQuery, ipAddress, CNA)
+                    throw errorProcess("E07") // Invalid password
+                }
             } else {
+                // Successful login: reset fail counter
                 jdbcTemplate.update(
-                    """UPDATE user SET lastLoginIP = ?,lastLoginTime = now(),loginFail = 0 WHERE CNA = ?""",
+                    "UPDATE user SET lastLoginIP = ?, lastLoginTime = NOW(), loginFail = 0 WHERE CNA = ?",
                     ipAddress,
                     CNA
                 )
             }
-
 
             return@APIprocess user
         } as CAMSDB.User?

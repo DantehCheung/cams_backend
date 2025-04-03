@@ -26,7 +26,7 @@ class ScheduledTasks(
     @Transactional
     fun checkOverdueDevices() {
         val overdueRecords = jdbcTemplate.query(
-            """-- 修改后的SQL查询（增加deviceID字段）
+            """
 SELECT 
   u.CNA,
   CONCAT(u.firstName, ' ', u.lastName) AS fullName,
