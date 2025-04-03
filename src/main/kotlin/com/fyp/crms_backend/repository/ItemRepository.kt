@@ -19,6 +19,7 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     """
 
             // Fetch devices
+<<<<<<< Updated upstream
             val devices: List<GetItemResponse.Devices> = jdbcTemplate.query(sqlDevices, arrayOf(roomID)) { rs, _ ->
                 GetItemResponse.Devices(
                     deviceID = rs.getInt("deviceID"),
@@ -35,6 +36,26 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                     deviceRFID = fetchDeviceRFIDs(rs.getInt("deviceID"))
                 )
             }
+=======
+            val devices: List<GetItemResponse.Devices> =
+                jdbcTemplate.query(sqlDevices, parameters) { rs, _ ->
+                    GetItemResponse.Devices(
+                        deviceID = rs.getInt("deviceID"),
+                        deviceName = rs.getString("deviceName"),
+                        price = rs.getBigDecimal("price"),
+                        orderDate = rs.getDate("orderDate")?.toLocalDate(),
+                        arriveDate = rs.getDate("arriveDate")?.toLocalDate(),
+                        maintenanceDate = rs.getDate("maintenanceDate")?.toLocalDate(),
+                        roomID = rs.getInt("roomID"),
+                        state = rs.getString("state")
+                            ?.firstOrNull(), // Get the first character of the ENUM
+                        remark = rs.getString("remark"),
+                        docs = fetchDeviceDocs(rs.getInt("deviceID")),
+                        partID = fetchDeviceParts(rs.getInt("deviceID")),
+                        deviceRFID = fetchDeviceRFIDs(rs.getInt("deviceID"))
+                    )
+                }
+>>>>>>> Stashed changes
 
             return@APIprocess GetItemResponse(device = devices)
         } as GetItemResponse
@@ -155,12 +176,20 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     private fun addSingleDevice(device: DeviceWithParts): Int {
         val keyHolder = org.springframework.jdbc.support.GeneratedKeyHolder()
         /*在插入資料時，GeneratedKeyHolder 會自動接收資料庫產生的主鍵 (常見為自增 ID)，並儲存在 keyHolder 中。
+<<<<<<< Updated upstream
         接著可透過 keyHolder.key 或對應方法取得該新插入記錄的 ID 來進行後續操作。*/
+=======
+  接著可透過 keyHolder.key 或對應方法取得該新插入記錄的 ID 來進行後續操作。*/
+>>>>>>> Stashed changes
         jdbcTemplate.update(
             { con ->
                 val ps = con.prepareStatement(
                     """INSERT INTO device (deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state, remark)
+<<<<<<< Updated upstream
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+=======
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+>>>>>>> Stashed changes
                     java.sql.Statement.RETURN_GENERATED_KEYS
                 )
                 ps.setString(1, device.deviceName)
@@ -171,11 +200,20 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                 ps.setInt(6, device.roomID)
                 ps.setString(7, device.state.toString())
                 ps.setString(8, device.remark)
+<<<<<<< Updated upstream
                 ps // Return the PreparedStatement
+=======
+                ps
+>>>>>>> Stashed changes
             },
             keyHolder
         )
         return keyHolder.key?.toInt() ?: throw IllegalStateException("No generated key returned")
+<<<<<<< Updated upstream
+=======
+
+
+>>>>>>> Stashed changes
     }
 
     private fun addDocs(deviceId: Int, docs: List<DeviceDoc>) {
@@ -195,7 +233,11 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                 { con ->
                     val ps = con.prepareStatement(
                         """INSERT INTO DevicePart (deviceID, devicePartName)
+<<<<<<< Updated upstream
                        VALUES (?, ?)"""
+=======
+                               VALUES (?, ?)"""
+>>>>>>> Stashed changes
                     )
                     ps.setInt(1, deviceId)
                     ps.setString(2, part.devicePartName)
@@ -207,7 +249,11 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
             // This assumes that devicePartName is unique for this device.
             val partId = jdbcTemplate.queryForObject(
                 """SELECT devicePartID FROM DevicePart
+<<<<<<< Updated upstream
                WHERE deviceID = ? AND devicePartName = ?""",
+=======
+                       WHERE deviceID = ? AND devicePartName = ?""",
+>>>>>>> Stashed changes
                 Int::class.java,
                 deviceId,
                 part.devicePartName
@@ -231,44 +277,45 @@ class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         }
     }
 
-// ---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
     // Delete Item
-@Transactional
-fun deleteItem(CNA: String, deviceID: Int): Boolean {
-    return super.APIprocess(CNA, "delete Device Data") {
-        // Verify that the device exists and is not already marked as deleted.
-        val count = jdbcTemplate.queryForObject(
-            """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND state <> 'D'""",
-            Int::class.java,
-            deviceID
-        ) ?: 0
+    @Transactional
+    fun deleteItem(CNA: String, deviceID: Int): Boolean {
+        return super.APIprocess(CNA, "delete Device Data") {
+            // Verify that the device exists and is not already marked as deleted.
+            val count = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND state <> 'D'""",
+                Int::class.java,
+                deviceID
+            ) ?: 0
 
-        if (count == 0) {
-            throw IllegalStateException("Device not found or already deleted")
-        }
+            if (count == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
 
-        // Perform delete operations (mark as deleted)
-        jdbcTemplate.update(
-            """UPDATE Device SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
-        jdbcTemplate.update(
-            """UPDATE DevicePart SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
-        jdbcTemplate.update(
-            """UPDATE DeviceRFID SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
-        jdbcTemplate.update(
-            """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
+            // Perform delete operations (mark as deleted)
+            jdbcTemplate.update(
+                """UPDATE Device SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
+            jdbcTemplate.update(
+                """UPDATE DevicePart SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
+            jdbcTemplate.update(
+                """UPDATE DeviceRFID SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
+            jdbcTemplate.update(
+                """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
 
-        return@APIprocess true
-    } as Boolean
-}
+            return@APIprocess true
+        } as Boolean
+    }
 
+<<<<<<< Updated upstream
 
     // Edit
     @Transactional
@@ -279,6 +326,24 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
             Int::class.java,
             deviceID
         ) ?: 0
+=======
+    // Edit device (big)
+    fun editItem(
+        CNA: String,
+        deviceID: Int,
+        deviceName: String,
+        price: BigDecimal,
+        orderDate: LocalDate,
+        arriveDate: LocalDate,
+        maintenanceDate: LocalDate,
+        roomID: Int,
+        state: Char,
+        remark: String,
+        docs: List<UpdatedDeviceDoc>
+    ): Boolean {
+
+        return super.APIprocess(CNA, "edit Device Data") {
+>>>>>>> Stashed changes
 
         if (count == 0) {
             throw IllegalStateException("Device not found")
@@ -315,6 +380,37 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 doc.docPath,
                 doc.deviceDocID,
                 deviceID
+<<<<<<< Updated upstream
+=======
+            ) ?: 0
+
+            if (devicecount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val roomcount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Room WHERE roomID = ?""", Int::class.java,
+                roomID
+            ) ?: 0
+
+            if (roomcount == 0) {
+                throw IllegalStateException("Room not found")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE Device SET deviceName = ?, price = ?, orderDate = ?,
+            | arriveDate = ?, maintenanceDate = ?, roomID = ?, state = ?, remark = ? 
+            | WHERE deviceID = ?""".trimMargin(),
+                deviceName,
+                price,
+                orderDate,
+                arriveDate,
+                maintenanceDate,
+                roomID,
+                state.toString(),
+                remark,
+                deviceID
+>>>>>>> Stashed changes
             )
         }
 
@@ -326,6 +422,7 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 part.devicePartName,
                 part.devicePartID,
                 deviceID
+<<<<<<< Updated upstream
             )
             part.deviceRFID.forEach { rfid ->
                 jdbcTemplate.update(
@@ -334,12 +431,84 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                     rfid.RFID,
                     rfid.deviceRFIDID,
                     deviceID
+=======
+            ) ?: 0
+
+            if (docRow != docs.size) {
+                throw IllegalStateException("Update DeviceDoc not success, the number of docs is not match")
+            }
+
+
+            docs.forEach { doc ->
+
+                val ensurePath = jdbcTemplate.queryForObject(
+                    """SELECT COUNT(*) FROM DeviceDoc WHERE docPath = ?""",
+                    Int::class.java,
+                    doc.docPath
+                ) ?: 0
+
+                if (ensurePath == 0) {
+                    throw IllegalStateException("Update DeviceDoc not success, wrong docPath")
+                }
+
+                // DOC PATH IS PRIMARY KEY, CANNOT BE CHANGED
+                val docUpdate: Int = jdbcTemplate.update(
+                    """UPDATE DeviceDoc SET state = ? WHERE deviceID = ? AND docPath = ?""",
+                    doc.state.toString(), deviceID, doc.docPath
+>>>>>>> Stashed changes
                 )
             }
+<<<<<<< Updated upstream
         }
         return true
     }
 
+=======
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
+
+    fun editItemPart(
+        CNA: String,
+        deviceID: Int,
+        partID: Int,
+        partName: String,
+        state: Char
+    ): Boolean {
+        return super.APIprocess(CNA, "edit Device Part") {
+            // Verify that the device exists and is not already marked as deleted.
+            val devicecount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND partID = ?""",
+                Int::class.java,
+                deviceID,
+                partID
+            ) ?: 0
+
+            if (devicecount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DevicePart SET devicePartName = ?, state = ? WHERE deviceID = ? AND devicePartID = ?""",
+                partName, state.toString(), deviceID, partID
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
+
+>>>>>>> Stashed changes
     //Manual Adjust Item
     data class DeviceStateInfo(
         val deviceID: Int,
@@ -358,11 +527,74 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
           AND d.state != 'D'
     """
 
+<<<<<<< Updated upstream
         // Prepare the arguments: roomID first, followed by the RFIDs
         val args = arrayOf(roomID, *rfids.toTypedArray())
 
         // Execute the query with the arguments and a row mapper
         return jdbcTemplate.query(sql, args) { rs, _ ->
+=======
+    fun ManualInventoryFunction(
+        CNA: String,
+        roomID: Int,
+        scannedRFIDs: List<String>
+    ): ManualItemList {
+        return super.APIprocess(CNA, "Manual Inventory") {
+
+            val initialStates = this.getDeviceStatesByRFIDs(
+                roomID,
+                scannedRFIDs
+            )
+
+            val allDevices = this.getRoomRFIDInfo(roomID)
+
+            val updates = allDevices.associate { device ->
+                val newState = when {
+                    device.RFID in scannedRFIDs -> when (device.currentState) {
+                        'L', 'M' -> 'A'  // 扫描到的L/M状态转A
+                        else -> device.currentState
+                    }
+
+                    else -> when (device.currentState) {
+                        in listOf('A', 'S') -> 'M'  // 未扫描的A/S转M
+                        else -> device.currentState
+                    }
+                }
+                device.deviceID to newState
+
+            }
+
+            val updatedStates = this.batchUpdateDeviceStates(updates)
+            return@APIprocess ManualItemList(initialStates, allDevices, updatedStates)
+        } as ManualItemList
+    }
+
+    private fun getDeviceStatesByRFIDs(roomID: Int, rfids: List<String>): List<DeviceStateInfo> {
+
+        val sql = """
+                SELECT d.deviceID, d.deviceName, d.state, dr.RFID
+                FROM Device d
+                JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
+                WHERE d.roomID = ?
+                  AND dr.RFID IN (${rfids.joinToString { "?" }})
+                  AND d.state != 'D'
+            """
+        // Prepare the arguments: roomID first, followed by the RFIDs
+        val args = arrayOf(roomID, *rfids.toTypedArray())
+
+
+        // Execute the query with the arguments and a row mapper
+        jdbcTemplate.query(sql, args) { rs, _ ->
+            DeviceStateInfo(
+                deviceID = rs.getInt("deviceID"),
+                deviceName = rs.getString("deviceName"),
+                currentState = rs.getString("state").first(),
+                RFID = rs.getString("RFID")
+            )
+        }
+
+        val result = jdbcTemplate.query(sql, args) { rs, _ ->
+>>>>>>> Stashed changes
             DeviceStateInfo(
                 deviceID = rs.getInt("deviceID"),
                 deviceName = rs.getString("deviceName"),
@@ -377,6 +609,7 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
     fun batchUpdateDeviceStates(updates: Map<Int, Char>): Map<Int, Char> {
         val afterStates = mutableMapOf<Int, Char>()
 
+<<<<<<< Updated upstream
         updates.forEach { (deviceID, newState) ->
             jdbcTemplate.update(
                 "UPDATE Device SET state = ? WHERE deviceID = ?",
@@ -391,6 +624,24 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 deviceID
             ) ?: 'E'
 
+=======
+        val afterStates = mutableMapOf<Int, Char>()
+
+        updates.forEach { (deviceID, newState) ->
+
+            jdbcTemplate.update(
+                "UPDATE Device SET state = ? WHERE deviceID = ?",
+                newState.toString(),
+                deviceID
+            )
+
+            val afterState = jdbcTemplate.queryForObject(
+                "SELECT state FROM Device WHERE deviceID = ?",
+                Char::class.java,
+                deviceID
+            ) ?: 'E'
+
+>>>>>>> Stashed changes
             afterStates[deviceID] = afterState
         }
 
@@ -415,4 +666,14 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
             )
         }
     }
+
+    fun existsById(deviceId: Int): Boolean {
+        return jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM Device WHERE deviceID = ?",
+            Int::class.java,
+            deviceId
+        ) ?: 0 > 0
+    }
+
+
 }

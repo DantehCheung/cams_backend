@@ -6,6 +6,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 data class UpdatedDeviceDoc(
+<<<<<<< Updated upstream
     val deviceDocID: Int,
     val docPath: String
 )
@@ -20,6 +21,11 @@ data class UpdatedDevicePart(
     val devicePartName: String,
     val deviceRFID: List<UpdatedDeviceRFID>
 )
+=======
+    val docPath: String,
+    val state: Char
+): Request
+>>>>>>> Stashed changes
 
 data class EditItemRequest (
     val token: String,
