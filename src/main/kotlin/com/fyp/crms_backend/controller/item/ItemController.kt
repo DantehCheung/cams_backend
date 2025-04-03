@@ -2,10 +2,7 @@ package com.fyp.crms_backend.controller.item
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.item.AddItemRequest
-import com.fyp.crms_backend.dto.item.DeleteItemRequest
-import com.fyp.crms_backend.dto.item.GetItemRequest
-import com.fyp.crms_backend.dto.item.ManualInventoryRequest
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -35,8 +32,8 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
-    /*
-    @PostMapping("/editdevice")
+
+    @PostMapping("/edititem") // with device doc
     fun editItem(
         @RequestBody request: EditItemRequest
     ): Response {
@@ -44,9 +41,17 @@ class ItemController(private val itemService: ItemService) : ApiController(){
             return@process itemService.editItem(request)
         }
     }
-*/
 
-    @PostMapping("/deletedevice")
+    @PostMapping("/updateitempart")
+    fun editItemPart(
+        @RequestBody request: EditItemPartRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.editItemPart(request)
+        }
+    }
+
+    @PostMapping("/deleteitem")
     fun deleteItem(
         @RequestBody request: DeleteItemRequest
     ): Response {

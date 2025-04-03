@@ -1,14 +1,10 @@
 spring:
+  config:
+    import: optional:classpath:application-secret.yml
   application:
     name: crms_backend
   datasource:
-    url: jdbc:mysql://localhost:3306/cams
-    username: APIuser
-    password: P@$$w0rd
     driver-class-name: com.mysql.cj.jdbc.Driver
-<<<<<<< Updated upstream
-
-=======
   mail:
     host: smtp.gmail.com
     port: 465
@@ -23,20 +19,11 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
->>>>>>> Stashed changes
 
-file:
-  upload-dir: ./uploads
 
 security:
   jwt:
-    secret: "l08042b48857c53cb0557297631c85814886b9ac112311219b8681685243a756fcab00aca40ef8aac7fc2f48bff7be9189863c4fb0df8cd52174cc3134dc4747a0b248577a0836b255e96f0f2e9308e49aa9f70dbad3cb5d86f483bf1edd4a030ab2193c091904a17a58f49eacbc36e1cf30f2a9f4cba80e6f76a1d7ece1ad966e3c5f6b627a446f4b9eea29c5b0c0d3ed493a123bf7da7a77c4ceaaba6d9c831a69638724fa389a90445c7bc55d3db3bcb5f079147f968fd774e480c724a0943edf33ec69eb45df3a616c49cf68fbe572be7ba8d2734dfaf58b66a503a5d41e3678ee546983976a7d00b52f1025d32f937e22778b5c6e58451088bddbe33bc94"
     expire_time: 3600
-
 server:
   port: 8787
   address: 0.0.0.0

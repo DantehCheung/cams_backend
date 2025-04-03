@@ -25,7 +25,7 @@ class RoomRepository(
         println("trying to fetch data room")
         return super.APIprocess(CNA, "get Room Data") {
             jdbcTemplate.query(
-                """select roomID, room.campusID,roomNumber,roomName from room, campus where campus.campusID = room.campusID and room.campusID = ?""",
+                """select roomID, room.campusID,roomNumber,roomName from room, campus where campus.campusID = room.campusID and room.campusID = ? and room.state = 'A'""",
                 rowMapper,
                 campusID
             )

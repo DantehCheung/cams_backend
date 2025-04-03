@@ -18,7 +18,15 @@ class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiSer
     fun login(request: Request, ipAddress: String): LoginResponse {
         var user: CAMSDB.User? = null
         if (request is LoginByPwRequest) {
-            user = userRepository.findByCNAAndPassword(request.CNA, request.password, ipAddress)
+            // Split username into CNA and domain if it's an email
+            val (cnaPart, domainPart) = if (request.CNA.contains("@")) {
+                val parts = request.CNA.split("@", limit = 2)
+                if (parts.size != 2) throw errorProcess("E09") // Invalid email format
+                Pair(parts[0], parts[1])
+            } else {
+                Pair(request.CNA, null)
+            }
+            user = userRepository.findByCNAAndPassword(cnaPart, domainPart, request.password, ipAddress)
                 ?: throw IllegalArgumentException("Invalid CNA or password")
         } else if (request is LoginByCardRequest) {
             user = userRepository.findByCard(request.CardID, ipAddress)

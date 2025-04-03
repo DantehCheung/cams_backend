@@ -1,5 +1,7 @@
 package com.fyp.crms_backend.service
 
+import com.fyp.crms_backend.exception.ErrorCodeException
+import com.fyp.crms_backend.utils.ErrorCode
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
 import org.springframework.stereotype.Service
@@ -7,6 +9,10 @@ import org.springframework.stereotype.Service
 
 @Service
 abstract class ApiService(val jwt: JWT) {
+
+    protected fun errorProcess(code: String): ErrorCodeException {
+        return ErrorCodeException(ErrorCode.toErrorCode(code))
+    }
 
     protected fun decryptToken(token: String): Claims {
         // Simulate token verification logic

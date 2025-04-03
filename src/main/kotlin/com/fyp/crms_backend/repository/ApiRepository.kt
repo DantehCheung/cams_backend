@@ -17,6 +17,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
     }
 
     private fun checkPermissions():Boolean{
+        // TODO: Check if the user has the required permissions
         return true
     }
 
@@ -27,6 +28,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
             jdbcTemplate.update(sql, CNA, log)
             true
         } catch (e: DataAccessException) {
+            println(e.message)
             false // Return false if the database connection or query fails
         }
     }
@@ -64,6 +66,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
             if (!logAdded) {
                 throw errorProcess("E05") // Database connection or query error
+                println("API success, but add log fail")
             }
 
             // Step 5: Return the result
@@ -84,8 +87,11 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
             if (!logAdded) {
                 throw errorProcess("E05") // Database connection or query error
+                println("API and add log fail")
             }
+            println(e.message)
             throw errorProcess("E06")
+
         }
     }
 
@@ -112,6 +118,7 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
             if (!logAdded) {
                 throw errorProcess("E05") // Database connection or query error
+                println("API success, but add log fail")
             }
 
             // Step 5: Return the result
@@ -124,9 +131,13 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
 
             if (!logAdded) {
                 throw errorProcess("E05") // Database connection or query error
+                println("API and add log fail")
             }
-            throw errorProcess("E06")
+            println(e.message)
+            throw e
         }
+
+
     }
 
     override fun toString(): String {

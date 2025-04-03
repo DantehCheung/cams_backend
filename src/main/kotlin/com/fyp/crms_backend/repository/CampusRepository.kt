@@ -31,7 +31,7 @@ class CampusRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                 jdbcTemplate.query("""SELECT campus.campusID, campusShortName, campusName 
              FROM user 
              JOIN campus ON user.campusID = campus.campusID 
-             WHERE CNA = ?""", rowMapper, CNA)
+             WHERE CNA = ? and state = 'A'""", rowMapper, CNA)
             } else {
                 jdbcTemplate.query("""SELECT * FROM cams.campus""", rowMapper)
             }
