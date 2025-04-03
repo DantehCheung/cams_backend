@@ -538,4 +538,12 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
         }
 
     }
+
+    fun existsById(deviceId: Int): Boolean {
+        return jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM Device WHERE deviceID = ?",
+            Int::class.java,
+            deviceId
+        ) ?: 0 > 0
+    }
 }
