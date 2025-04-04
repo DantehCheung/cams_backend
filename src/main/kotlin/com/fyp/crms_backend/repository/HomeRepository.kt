@@ -32,7 +32,7 @@ class HomeRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
 
     fun fetchData(CNA:String): HomeResponse {
 
-        return super.APIprocess(CNA, "get Home Data") {
+
             val result: CAMSDB.User = jdbcTemplate.queryForObject(
                 """
                 SELECT lastLoginTime, lastLoginIP
@@ -52,15 +52,15 @@ class HomeRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                 rowMapper1
             )
 
-            return@APIprocess HomeResponse(
+            return HomeResponse(
                 LastLoginTime = result.lastLoginTime!!.toString(),
                 LastLoginPlace = result.lastLoginIP!!,
                 PendingConfirmItem = result1
             )
-        } as HomeResponse
+        }
 
 
-    }
+
 
 
 
