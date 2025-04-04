@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class HomeController(private val homeService: HomeService) : ApiController(){
 
-    @GetMapping("/gethome")
+    @PostMapping("/gethome")
     fun GetHome(@RequestBody request: HomeRequest): Response {
         //return process(request){
             return/*@process*/ homeService.execute(request)
