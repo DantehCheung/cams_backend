@@ -200,13 +200,13 @@ WHERE roomID = ?
 
     private fun addDocs(deviceId: Int, docs: List<DeviceDoc>) {
 
-            docs.forEach { doc ->
-                jdbcTemplate.update(
-                    """INSERT INTO DeviceDoc (deviceID, docPath) VALUES (?, ?)""",
-                    deviceId,
-                    doc.docPath
-                )
-            }
+        docs.forEach { doc ->
+            jdbcTemplate.update(
+                """INSERT INTO DeviceDoc (deviceID, docPath) VALUES (?, ?)""",
+                deviceId,
+                doc.docPath
+            )
+        }
 
     }
 
@@ -242,57 +242,57 @@ WHERE roomID = ?
 
     private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<DeviceRFID>) {
 
-            rfids.forEach { rfid ->
-                jdbcTemplate.update({ con ->
-                    val ps = con.prepareStatement(
-                        """INSERT INTO DeviceRFID (deviceID, devicePartID, RFID) VALUES (?, ?, ?)"""
-                    )
-                    ps.setInt(1, deviceID)
-                    ps.setInt(2, partId)
-                    ps.setString(3, rfid.RFID)
-                    ps
-                })
-            }
+        rfids.forEach { rfid ->
+            jdbcTemplate.update({ con ->
+                val ps = con.prepareStatement(
+                    """INSERT INTO DeviceRFID (deviceID, devicePartID, RFID) VALUES (?, ?, ?)"""
+                )
+                ps.setInt(1, deviceID)
+                ps.setInt(2, partId)
+                ps.setString(3, rfid.RFID)
+                ps
+            })
+        }
 
     }
 
-// ---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
     // Delete Item
-@Transactional
-fun deleteItem(CNA: String, deviceID: Int): Boolean {
-    return super.APIprocess(CNA, "delete Device Data") {
-        // Verify that the device exists and is not already marked as deleted.
-        val count = jdbcTemplate.queryForObject(
-            """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND state <> 'D'""",
-            Int::class.java,
-            deviceID
-        ) ?: 0
+    @Transactional
+    fun deleteItem(CNA: String, deviceID: Int): Boolean {
+        return super.APIprocess(CNA, "delete Device Data") {
+            // Verify that the device exists and is not already marked as deleted.
+            val count = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND state <> 'D'""",
+                Int::class.java,
+                deviceID
+            ) ?: 0
 
-        if (count == 0) {
-            throw IllegalStateException("Device not found or already deleted")
-        }
+            if (count == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
 
-        // Perform delete operations (mark as deleted)
-        jdbcTemplate.update(
-            """UPDATE Device SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
-        jdbcTemplate.update(
-            """UPDATE DevicePart SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
-        jdbcTemplate.update(
-            """UPDATE DeviceRFID SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
-        jdbcTemplate.update(
-            """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ?""",
-            deviceID
-        )
+            // Perform delete operations (mark as deleted)
+            jdbcTemplate.update(
+                """UPDATE Device SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
+            jdbcTemplate.update(
+                """UPDATE DevicePart SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
+            jdbcTemplate.update(
+                """UPDATE DeviceRFID SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
+            jdbcTemplate.update(
+                """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ?""",
+                deviceID
+            )
 
-        return@APIprocess true
-    } as Boolean
-}
+            return@APIprocess true
+        } as Boolean
+    }
 
     // Edit device (big)
     fun editItem(
@@ -493,5 +493,9 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
         ) ?: 0 > 0
     }
 
-
+    fun checkDeviceDocAvailable(docPath: String): Boolean {
+        val sql = "SELECT count(*) FROM devicedoc WHERE docPath = ? AND state = 'A';"
+        val count = jdbcTemplate.queryForObject(sql, Int::class.java, docPath) ?: 0
+        return count > 0
+    }
 }

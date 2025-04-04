@@ -13,6 +13,18 @@ open class ApiController {
         } catch (e: ErrorCodeException) {
             return ErrorResponse(e.errorCode.name, e.errorCode.description)
         } catch (e: Exception) {
+            println(e)
+            return ErrorResponse("E00", e.message.toString())
+        }
+    }
+
+    fun process(main: () -> Response): Response {
+        try {
+            return main()
+        } catch (e: ErrorCodeException) {
+            return ErrorResponse(e.errorCode.name, e.errorCode.description)
+        } catch (e: Exception) {
+            println(e)
             return ErrorResponse("E00", e.message.toString())
         }
     }

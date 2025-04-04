@@ -8,11 +8,12 @@ import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 
 @Service
-class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiService(jwt) {
+class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
 
 
     fun login(request: Request, ipAddress: String): LoginResponse {

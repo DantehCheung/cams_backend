@@ -1,13 +1,16 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.exception.ErrorCodeException
 import com.fyp.crms_backend.utils.ErrorCode
+import com.fyp.crms_backend.utils.Logger
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 
 
-abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
+abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Snowflake(1, 1)) {
+    val idGenerator = Snowflake(1, 1)
 
 
     // Check if the arguments are valid
@@ -19,22 +22,6 @@ abstract class ApiRepository(protected open val jdbcTemplate: JdbcTemplate) {
     private fun checkPermissions():Boolean{
         // TODO: Check if the user has the required permissions
         return true
-    }
-
-    // Add a log entry to the database
-    private fun addLog(CNA: String, log: String): Boolean {
-        return try {
-            val sql = "INSERT INTO log (DT,userCNA, log) VALUES (NOW(), ?, ?)"
-            jdbcTemplate.update(sql, CNA, log)
-            true
-        } catch (e: DataAccessException) {
-            println(e.message)
-            false // Return false if the database connection or query fails
-        }
-    }
-
-    fun errorProcess(code: String): ErrorCodeException {
-        return ErrorCodeException(ErrorCode.toErrorCode(code))
     }
 
 

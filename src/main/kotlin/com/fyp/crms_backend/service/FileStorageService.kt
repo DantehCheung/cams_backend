@@ -1,10 +1,14 @@
 package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.FileStorageProperties
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.exception.FileStorageException
 import com.fyp.crms_backend.repository.ItemRepository
+import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Logger
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.FileNotFoundException
@@ -14,20 +18,26 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
+
 @Service
 class FileStorageService(
     private val properties: FileStorageProperties,
-    private val deviceRepository: ItemRepository
-) {
-    // 根据设备ID获取存储路径
+    private val deviceRepository: ItemRepository,
+    jdbcTemplate: JdbcTemplate,
+    jwt: JWT
+) : ApiService(jwt,jdbcTemplate) {
     private fun getDeviceDir(deviceId: Int): Path {
-        return Paths.get(properties.uploadDir)
-            .resolve(deviceId.toString())
-            .normalize()
-            .toAbsolutePath()
+        try {
+            return Paths.get(properties.uploadDir)
+                .resolve(deviceId.toString())
+                .normalize()
+                .toAbsolutePath()
+        } catch (e: Exception) {
+            throw RuntimeException("Path is not exit")
+        }
+
     }
 
-    // 处理文件名冲突
     private fun resolveFileName(deviceDir: Path, fileName: String): String {
         if (!Files.exists(deviceDir.resolve(fileName))) {
             return fileName
@@ -46,27 +56,24 @@ class FileStorageService(
         return newName
     }
 
-    // 上传文件
-    fun storeFile(deviceId: Int, file: MultipartFile): String {
-        // 验证设备存在
+    fun storeFile(CNA:String,deviceId: Int, file: MultipartFile): String {
         if (!deviceRepository.existsById(deviceId)) {
             throw FileStorageException("Device $deviceId not found")
         }
 
-        // 创建设备目录
         val deviceDir = getDeviceDir(deviceId)
         Files.createDirectories(deviceDir)
 
-        // 处理文件名
         val fileName = resolveFileName(deviceDir, file.originalFilename!!)
 
-        // 保存文件
         try {
             file.inputStream.use { input ->
-                Files.copy(input, deviceDir.resolve(fileName),
+                Files.copy(
+                    input, deviceDir.resolve(fileName),
                     StandardCopyOption.REPLACE_EXISTING
                 )
             }
+            addLog(CNA,"File $fileName uploaded to device $deviceId")
         } catch (ex: IOException) {
             throw FileStorageException("Could not store file $fileName", ex)
         }
@@ -74,12 +81,18 @@ class FileStorageService(
         return fileName
     }
 
-    // 下载文件
     fun loadFile(deviceId: Int, fileName: String): Resource {
         val filePath = getDeviceDir(deviceId).resolve(fileName).normalize()
 
-        if (!Files.exists(filePath)) {
+        if (!filePath.startsWith(getDeviceDir(deviceId))) {
+            throw FileNotFoundException("Cannot access file outside device directory")
+        }
+        if (deviceRepository.checkDeviceDocAvailable(filePath.toString())) {
             throw FileNotFoundException("File $fileName not found")
+        }
+
+        if (!Files.exists(filePath) || !deviceRepository.checkDeviceDocAvailable(filePath.toString())) {
+            throw FileNotFoundException("File $fileName not found or not available")
         }
 
         return UrlResource(filePath.toUri()).also {
@@ -87,7 +100,6 @@ class FileStorageService(
         }
     }
 
-    // 获取设备所有文件
     fun listDeviceFiles(deviceId: Int): List<String> {
         val deviceDir = getDeviceDir(deviceId)
         return Files.list(deviceDir)
