@@ -23,9 +23,9 @@ class FileController(
         @RequestParam("deviceId") deviceId: Int,
         @RequestHeader("token") token: String
     ): ResponseEntity<Map<String, String>> {
-        jwt.decrypteToken(token)
+        val data = jwt.decrypteToken(token)
 
-        val fileName = storageService.storeFile(deviceId, file)
+        val fileName = storageService.storeFile(data.subject,deviceId, file)
         return ResponseEntity.ok(
             mapOf(
                 "message" to "File uploaded successfully",

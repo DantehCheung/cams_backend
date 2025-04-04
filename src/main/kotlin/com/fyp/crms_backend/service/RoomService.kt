@@ -5,10 +5,11 @@ import com.fyp.crms_backend.dto.room.*
 import com.fyp.crms_backend.repository.RoomRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 @Service
-class RoomService(private val roomRepository: RoomRepository, jwt: JWT) : ApiService(jwt) {
+class RoomService(private val roomRepository: RoomRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
 
     fun execute(request: GetRoomRequest): GetRoomResponse {
         val data: Claims = decryptToken(request.token)

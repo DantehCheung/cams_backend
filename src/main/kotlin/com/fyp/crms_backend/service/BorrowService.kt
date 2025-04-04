@@ -6,10 +6,11 @@ import com.fyp.crms_backend.dto.borrow.*
 import com.fyp.crms_backend.repository.BorrowRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 @Service
-class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT) : ApiService(jwt) {
+class BorrowService(private val borrowRepository: BorrowRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
 
     fun reservation(request: ReservationRequest): Response {
         val data: Claims = decryptToken(request.token)

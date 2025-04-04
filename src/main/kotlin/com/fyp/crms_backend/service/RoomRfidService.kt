@@ -7,13 +7,14 @@ import com.fyp.crms_backend.dto.roomRfid.EditRoomRFIDRequest
 import com.fyp.crms_backend.repository.RoomRFIDRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 @Service
 class RoomRFIDService(
     private val roomRFIDRepository: RoomRFIDRepository,
-    jwt: JWT
-) : ApiService(jwt) {
+    jwt: JWT, jdbcTemplate: JdbcTemplate
+) : ApiService(jwt, jdbcTemplate) {
 
     fun add(request: AddRoomRFIDRequest): StateResponse {
         val data: Claims = decryptToken(request.token)

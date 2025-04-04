@@ -5,11 +5,12 @@ import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 
 @Service
-class ItemService(private val itemRepository: ItemRepository, jwt: JWT) : ApiService(jwt) {
+class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
 
 
     fun get(request: GetItemRequest): GetItemResponse {

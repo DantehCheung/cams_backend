@@ -6,11 +6,12 @@ import com.fyp.crms_backend.dto.campus.*
 import com.fyp.crms_backend.repository.CampusRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 
 @Service
-class CampusService(private val campusRepository: CampusRepository, jwt: JWT) : ApiService(jwt) {
+class CampusService(private val campusRepository: CampusRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
 
 
 

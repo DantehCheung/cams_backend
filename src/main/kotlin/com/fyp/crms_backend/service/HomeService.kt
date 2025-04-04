@@ -5,12 +5,13 @@ import com.fyp.crms_backend.dto.home.HomeResponse
 import com.fyp.crms_backend.repository.HomeRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 
 
 @Service
-class HomeService(private val homeRepository: HomeRepository, jwt: JWT) : ApiService(jwt) {
+class HomeService(private val homeRepository: HomeRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
 
     fun execute(request: HomeRequest): HomeResponse {
 

@@ -1,11 +1,14 @@
 package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.FileStorageProperties
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.exception.FileStorageException
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Logger
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.FileNotFoundException
@@ -20,8 +23,9 @@ import java.nio.file.StandardCopyOption
 class FileStorageService(
     private val properties: FileStorageProperties,
     private val deviceRepository: ItemRepository,
+    jdbcTemplate: JdbcTemplate,
     jwt: JWT
-) : ApiService(jwt) {
+) : ApiService(jwt,jdbcTemplate) {
     private fun getDeviceDir(deviceId: Int): Path {
         try {
             return Paths.get(properties.uploadDir)
@@ -52,8 +56,7 @@ class FileStorageService(
         return newName
     }
 
-    //TODO: insert to db
-    fun storeFile(deviceId: Int, file: MultipartFile): String {
+    fun storeFile(CNA:String,deviceId: Int, file: MultipartFile): String {
         if (!deviceRepository.existsById(deviceId)) {
             throw FileStorageException("Device $deviceId not found")
         }
@@ -70,6 +73,7 @@ class FileStorageService(
                     StandardCopyOption.REPLACE_EXISTING
                 )
             }
+            addLog(CNA,"File $fileName uploaded to device $deviceId")
         } catch (ex: IOException) {
             throw FileStorageException("Could not store file $fileName", ex)
         }
@@ -77,12 +81,18 @@ class FileStorageService(
         return fileName
     }
 
-    // TODO: check state
     fun loadFile(deviceId: Int, fileName: String): Resource {
         val filePath = getDeviceDir(deviceId).resolve(fileName).normalize()
 
-        if (!Files.exists(filePath)) {
+        if (!filePath.startsWith(getDeviceDir(deviceId))) {
+            throw FileNotFoundException("Cannot access file outside device directory")
+        }
+        if (deviceRepository.checkDeviceDocAvailable(filePath.toString())) {
             throw FileNotFoundException("File $fileName not found")
+        }
+
+        if (!Files.exists(filePath) || !deviceRepository.checkDeviceDocAvailable(filePath.toString())) {
+            throw FileNotFoundException("File $fileName not found or not available")
         }
 
         return UrlResource(filePath.toUri()).also {

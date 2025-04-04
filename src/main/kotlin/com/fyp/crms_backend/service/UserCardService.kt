@@ -7,13 +7,14 @@ import com.fyp.crms_backend.dto.userCard.EditUserCardRequest
 import com.fyp.crms_backend.repository.UserCardRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 @Service
 class UserCardService(
     private val userCardRepository: UserCardRepository,
-    jwt: JWT
-) : ApiService(jwt) {
+    jwt: JWT, jdbcTemplate: JdbcTemplate
+) : ApiService(jwt,jdbcTemplate) {
 
     fun add(request: AddUserCardRequest): StateResponse {
         val data: Claims = decryptToken(request.token)
