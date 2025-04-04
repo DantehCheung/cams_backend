@@ -55,5 +55,14 @@ enum class AccessPagePermission(val flag: Int) {
         fun hasPermission(value: Int, permission: AccessPagePermission): Boolean {
             return (value and permission.flag) != 0
         }
+
+        fun defaultAccessPage(accessLevel: Int): Int {
+            return when (accessLevel) {
+                0 -> 65535
+                100 -> 63487
+                1000 -> 1540
+                else -> 0
+            }
+        }
     }
 }
