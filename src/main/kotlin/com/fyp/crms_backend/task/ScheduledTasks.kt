@@ -2,7 +2,6 @@ package com.fyp.crms_backend.task
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.utils.Logger
-import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
@@ -43,8 +42,7 @@ FROM DeviceBorrowRecord br
 JOIN User u ON br.borrowUserCNA = u.CNA
 JOIN Device d ON br.deviceID = d.deviceID
 LEFT JOIN DeviceReturnRecord rr ON br.borrowRecordID = rr.borrowRecordID
-WHERE u.accessLevel = 1000
-  AND d.state = 'L'
+WHERE d.state = 'L'
   AND rr.returnDate IS NULL
   AND br.leasePeriod < CURDATE()
 GROUP BY u.CNA;"""
