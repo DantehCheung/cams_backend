@@ -6,23 +6,9 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 data class UpdatedDeviceDoc(
-    val deviceDocID: Int,
-    val docPath: String
-): Request
-
-data class UpdatedDeviceRFID(
-    val deviceRFIDID: Int,
-    val RFID: String
-): Request
-
-data class UpdatedDevicePart(
-    val devicePartID: Int,
-    val devicePartName: String,
-    val deviceRFID: List<UpdatedDeviceRFID>
     val docPath: String,
     val state: Char
-): Request
-
+)
 
 data class EditItemRequest (
     val token: String,
@@ -36,5 +22,4 @@ data class EditItemRequest (
     val state: Char,
     val remark: String,
     val docs: List<UpdatedDeviceDoc>,
-    val deviceParts: List<UpdatedDevicePart>
 ) : Request

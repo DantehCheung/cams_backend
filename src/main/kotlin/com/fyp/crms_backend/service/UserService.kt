@@ -46,7 +46,8 @@ class UserService(private val userRepository: UserRepository, jwt: JWT) : ApiSer
             accessPage = user.accessPage!!,
             firstName = user.firstName!!,
             lastName = user.lastName!!,
-            lastLoginIp = user.lastLoginIP ?: ""
+            lastLoginIp = user.lastLoginIP ?: "",
+            lastLoginTime = user.lastLoginTime!!,
         )
 
 

@@ -199,7 +199,7 @@ WHERE roomID = ?
     }
 
     private fun addDocs(deviceId: Int, docs: List<DeviceDoc>) {
-        return super.APIprocess("addDocs", "add device documents") {
+
             docs.forEach { doc ->
                 jdbcTemplate.update(
                     """INSERT INTO DeviceDoc (deviceID, docPath) VALUES (?, ?)""",
@@ -207,7 +207,7 @@ WHERE roomID = ?
                     doc.docPath
                 )
             }
-        } as Unit
+
     }
 
 
@@ -236,13 +236,12 @@ WHERE roomID = ?
                 part.devicePartName
             ) ?: throw IllegalStateException("No generated key returned")
 
-                addRFIDs(deviceId, partId, part.deviceRFID)
-            }
-        } as Unit
+            addRFIDs(deviceId, partId, part.deviceRFID)
+        }
     }
 
     private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<DeviceRFID>) {
-        return super.APIprocess("addRFIDs", "add device RFIDs") {
+
             rfids.forEach { rfid ->
                 jdbcTemplate.update({ con ->
                     val ps = con.prepareStatement(
@@ -254,7 +253,7 @@ WHERE roomID = ?
                     ps
                 })
             }
-        } as Unit
+
     }
 
 // ---------------------------------------------------------------------------------------------
@@ -295,16 +294,20 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
     } as Boolean
 }
 
+    // Edit device (big)
+    fun editItem(
+        CNA: String, deviceID: Int, deviceName: String, price: BigDecimal, orderDate: LocalDate, arriveDate: LocalDate,
+        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String, docs: List<UpdatedDeviceDoc>
+    ): Boolean {
 
-    // Edit
-    @Transactional
-    fun editItem(CNA: String, deviceID: Int, request: EditItemRequest): Boolean {
-        // Verify device exists.
-        val count = jdbcTemplate.queryForObject(
-            """SELECT COUNT(1) FROM Device WHERE deviceID = ?""",
-            Int::class.java,
-            deviceID
-        ) ?: 0
+        return super.APIprocess(CNA, "editData") {
+
+            // Verify that the device exists and is not already marked as deleted.
+            val devicecount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ?""",
+                Int::class.java,
+                deviceID
+            ) ?: 0
 
             if (devicecount == 0) {
                 throw IllegalStateException("Device not found or already deleted")
@@ -360,38 +363,48 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                     doc.state.toString(), deviceID,doc.docPath
                 )
 
-        // Update document records.
-        request.docs.forEach { doc ->
-            jdbcTemplate.update(
-                """UPDATE DeviceDoc SET docPath = ? 
-                   WHERE deviceDocID = ? AND deviceID = ?""",
-                doc.docPath,
-                doc.deviceDocID,
-                deviceID
-            )
-        }
+                // if one of the sql gg will throw error
+                if (docUpdate == 0) {
+                    throw IllegalStateException("Update DeviceDoc not success, wrong state")
+                }
 
-        // Update device part and associated RFID records.
-        request.deviceParts.forEach { part ->
-            jdbcTemplate.update(
-                """UPDATE DevicePart SET devicePartName = ? 
-                   WHERE devicePartID = ? AND deviceID = ?""",
-                part.devicePartName,
-                part.devicePartID,
-                deviceID
-            )
-            part.deviceRFID.forEach { rfid ->
-                jdbcTemplate.update(
-                    """UPDATE DeviceRFID SET RFID = ? 
-                       WHERE deviceRFIDID = ? AND deviceID = ?""",
-                    rfid.RFID,
-                    rfid.deviceRFIDID,
-                    deviceID
-                )
             }
-        }
-        return true
+
+            return@APIprocess if (rowUpdate > 0 ) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    } // end
+
+    fun editItemPart(CNA:String, deviceID: Int, partID: Int, partName: String, state: Char): Boolean {
+        return super.APIprocess(CNA, "editData") {
+            // Verify that the device exists and is not already marked as deleted.
+            val devicecount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND partID = ?""",
+                Int::class.java,
+                deviceID,
+                partID
+            ) ?: 0
+
+            if (devicecount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DevicePart SET devicePartName = ?, state = ? WHERE deviceID = ? AND devicePartID = ?""",
+                partName, state.toString(), deviceID, partID
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
     }
+
 
 
 
@@ -425,9 +438,8 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 RFID = rs.getString("RFID")
             )
         }
-        return result
+    } // end
 
-    }
 
 
     @Transactional
@@ -454,15 +466,15 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
         return afterStates
     }
 
-    private fun getRoomRFIDInfo(roomID: Int): List<DeviceStateInfo> {
+    fun getRoomRFIDInfo(roomID: Int): List<DeviceStateInfo> {
         val sql = """
-                SELECT d.deviceID, d.deviceName, d.state, dr.RFID
-                FROM Device d
-                JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
-                WHERE d.roomID = ?
-                  AND d.state != 'D'
-                  AND dr.state = 'A'
-            """
+        SELECT d.deviceID, d.deviceName, d.state, dr.RFID
+        FROM Device d
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
+        WHERE d.roomID = ? 
+          AND d.state != 'D'
+          AND dr.state = 'A'
+    """
         return jdbcTemplate.query(sql, arrayOf(roomID)) { rs, _ ->
             DeviceStateInfo(
                 rs.getInt("deviceID"),
@@ -471,7 +483,6 @@ fun deleteItem(CNA: String, deviceID: Int): Boolean {
                 rs.getString("RFID")
             )
         }
-
     }
 
     fun existsById(deviceId: Int): Boolean {
