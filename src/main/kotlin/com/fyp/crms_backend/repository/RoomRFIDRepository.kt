@@ -1,6 +1,9 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.dto.room.GetRoomResponse
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.queryForObject
 import org.springframework.stereotype.Repository
 
 
@@ -18,7 +21,7 @@ class RoomRFIDRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplat
             if (count > 0) throw RuntimeException("RFID already exists")
 
             // 插入新紀錄
-            jdbcTemplate.update(
+            return@APIprocess jdbcTemplate.update(
                 "INSERT INTO RoomRFID (roomID, RFID) VALUES (?, ?)",
                 roomID,
                 RFID
@@ -44,13 +47,37 @@ class RoomRFIDRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplat
             params.add(RFID)
 
             val query = "UPDATE RoomRFID SET ${updates.joinToString(", ")} WHERE RFID = ?"
-            jdbcTemplate.update(query, *params.toTypedArray()) > 0
+            return@APIprocess jdbcTemplate.update(query, *params.toTypedArray()) > 0
         } as Boolean
     }
 
     fun delete(CNA: String, RFID: String): Boolean {
         return APIprocess(CNA, "Delete Room RFID") {
-            jdbcTemplate.update("UPDATE RoomRFID SET state = 'D' WHERE RFID = ?", RFID) > 0
+            return@APIprocess jdbcTemplate.update(
+                "UPDATE RoomRFID SET state = 'D' WHERE RFID = ?",
+                RFID
+            ) > 0
         } as Boolean
+    }
+
+    fun getRoomByRFID(CNA: String, RFID: String): GetRoomResponse.SingleRoomResponse? {
+        return APIprocess(CNA, "Get Room By RFID") {
+            return@APIprocess try {
+                jdbcTemplate.queryForObject(
+                    "SELECT r.roomID, r.campusID, r.roomNumber, r.roomName FROM room r inner join roomrfid rf on r.roomID = rf.roomID where r.state !='D' and rf.state !='D' and rf.RFID = ?",
+                    { rs, _ ->
+                        GetRoomResponse.SingleRoomResponse(
+                            rs.getInt("roomID"),
+                            rs.getInt("campusID"),
+                            rs.getString("roomNumber"),
+                            rs.getString("roomName")
+                        )
+                    },
+                    RFID
+                )
+            } catch (e: EmptyResultDataAccessException) {
+                null
+            }
+        } as GetRoomResponse.SingleRoomResponse?
     }
 }

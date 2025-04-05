@@ -19,3 +19,9 @@ data class DeleteRoomRFIDRequest(
     val RFID: String,
     val token: String
 ) : Request
+
+data class GetRoomByRFIDRequest(
+    val token: String,
+    val RFID: String,
+
+) : Request
