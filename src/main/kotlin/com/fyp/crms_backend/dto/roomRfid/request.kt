@@ -24,4 +24,4 @@ data class GetRoomByRFIDRequest(
     val token: String,
     val RFID: String,
 
-) : Request
+    ) : Request

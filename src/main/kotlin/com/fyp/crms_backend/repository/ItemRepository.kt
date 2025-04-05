@@ -19,6 +19,7 @@ SELECT *
 FROM Device 
 WHERE roomID = ?
     """
+
             if (stateList != null && stateList.isNotEmpty()) {
                 val placeholders = stateList.joinToString(",") { "?" }
                 sqlDevices += " AND state IN ($placeholders)"
@@ -51,58 +52,52 @@ WHERE roomID = ?
     }
 
     fun fetchDeviceDocs(deviceID: Int): List<GetItemResponse.DeviceDoc> {
-        return super.APIprocess("fetchDeviceDocs", "fetch device documents") {
             val sql = """
                 SELECT *
                 FROM DeviceDoc
                 WHERE deviceID = ? and state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DeviceDoc(
                     deviceID = rs.getInt("deviceID"),
                     docPath = rs.getString("docPath")
                 )
             }
-        } as List<GetItemResponse.DeviceDoc>
     }
 
     fun fetchDeviceParts(deviceID: Int): List<GetItemResponse.DevicePartID> {
-        return super.APIprocess("fetchDeviceParts", "fetch device parts") {
             val sql = """
                 SELECT *
                 FROM DevicePart
                 WHERE deviceID = ? and state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DevicePartID(
                     deviceID = rs.getInt("deviceID"),
                     devicePartID = rs.getInt("devicePartID"),
                     devicePartName = rs.getString("devicePartName")
                 )
             }
-        } as List<GetItemResponse.DevicePartID>
     }
 
     fun fetchDeviceRFIDs(deviceID: Int): List<GetItemResponse.DeviceRFID> {
-        return super.APIprocess("fetchDeviceRFIDs", "fetch device RFIDs") {
             val sql = """
                 SELECT *
                 FROM DeviceRFID
                 WHERE deviceID = ? and state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DeviceRFID(
                     deviceID = rs.getInt("deviceID"),
                     devicePartID = rs.getInt("devicePartID"),
                     RFID = rs.getString("RFID")
                 )
             }
-        } as List<GetItemResponse.DeviceRFID>
     }
 
     private fun fetchDeviceDocs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceDoc>> {
-        return super.APIprocess("fetchDeviceDocs", "fetch multiple device documents") {
-            jdbcTemplate.query(
+
+        return jdbcTemplate.query(
                 """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()} ) and state = 'A'"""
             ) { rs, _ ->
                 GetItemResponse.DeviceDoc(
@@ -110,12 +105,11 @@ WHERE roomID = ?
                     docPath = rs.getString("docPath")
                 )
             }.groupBy { it.deviceID }
-        } as Map<Int?, List<GetItemResponse.DeviceDoc>>
     }
 
     private fun fetchDeviceParts(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DevicePartID>> {
-        return super.APIprocess("fetchDeviceParts", "fetch multiple device parts") {
-            jdbcTemplate.query(
+
+        return jdbcTemplate.query(
                 """
                     SELECT
                         deviceID,
@@ -131,12 +125,10 @@ WHERE roomID = ?
                     devicePartName = rs.getString("devicePartName")
                 )
             }.groupBy { it.deviceID }
-        } as Map<Int?, List<GetItemResponse.DevicePartID>>
     }
 
     private fun fetchDeviceRFIDs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceRFID>> {
-        return super.APIprocess("fetchDeviceRFIDs", "fetch multiple device RFIDs") {
-            jdbcTemplate.query(
+        return jdbcTemplate.query(
                 """
                     SELECT
                         deviceID,
@@ -152,7 +144,7 @@ WHERE roomID = ?
                     RFID = rs.getString("RFID")
                 )
             }.groupBy { it.deviceID }
-        } as Map<Int?, List<GetItemResponse.DeviceRFID>>
+
     }
 
 

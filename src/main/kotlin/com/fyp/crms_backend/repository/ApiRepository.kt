@@ -2,9 +2,7 @@ package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.exception.ErrorCodeException
-import com.fyp.crms_backend.utils.ErrorCode
 import com.fyp.crms_backend.utils.Logger
-import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 
@@ -104,8 +102,9 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
 
 
             if (!logAdded) {
-                throw errorProcess("E05") // Database connection or query error
                 println("API success, but add log fail")
+                throw errorProcess("E05") // Database connection or query error
+
             }
 
             // Step 5: Return the result
@@ -117,8 +116,9 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
             val logAdded = addLog(CNA, "fail: $logMsg with (${e.message?.replace(Regex(" +"), " ")})")
 
             if (!logAdded) {
-                throw errorProcess("E05") // Database connection or query error
                 println("API and add log fail")
+
+                throw errorProcess("E05") // Database connection or query error
             }
             println(e.message)
             throw e
