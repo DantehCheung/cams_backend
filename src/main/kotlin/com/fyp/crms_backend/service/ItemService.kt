@@ -137,6 +137,14 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
             )
         )
     }
+
+    fun getItemByRFID(request: GetItemByRFIDRequest): GetItemByRFIDResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo = itemRepository.getItemByRFID(data.subject, request.RFID)
+
+        return repo
+    }
 }
 
 

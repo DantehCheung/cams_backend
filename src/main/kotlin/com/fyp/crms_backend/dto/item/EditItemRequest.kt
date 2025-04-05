@@ -8,7 +8,7 @@ import java.time.LocalDate
 data class UpdatedDeviceDoc(
     val docPath: String,
     val state: Char
-)
+): Request
 
 data class EditItemRequest (
     val token: String,

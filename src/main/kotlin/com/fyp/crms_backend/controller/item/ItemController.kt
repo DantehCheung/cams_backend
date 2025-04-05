@@ -70,6 +70,15 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
+    @PostMapping("/getitembyrfid")
+    fun getItemByRFID(
+        @RequestBody request: GetItemByRFIDRequest
+    ): Response {
+        return process(request) {
+            return@process itemService.getItemByRFID(request)
+        }
+    }
+
 
 
 }

@@ -498,4 +498,27 @@ WHERE roomID = ?
         val count = jdbcTemplate.queryForObject(sql, Int::class.java, docPath) ?: 0
         return count > 0
     }
+
+    fun getItemByRFID(CNA: String, RFID: String): GetItemByRFIDResponse {
+        return super.APIprocess(CNA, "get item by RFID") {
+            val sql = """
+select d.deviceID, deviceName, roomID,d.state as 'deviceState',remark,dp.devicePartID,devicePartName
+from device d
+inner join devicepart dp on d.deviceID = dp.devicePartID
+inner join devicerfid dr on d.deviceID = dr.deviceID
+where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.RFID = ?
+            """
+            jdbcTemplate.query(sql, arrayOf(RFID)) { rs, _ ->
+                GetItemByRFIDResponse(
+                    deviceID = rs.getInt("deviceID"),
+                    deviceName = rs.getString("deviceName"),
+                    roomID = rs.getInt("roomID"),
+                    deviceState = rs.getString("state"),
+                    remark = rs.getString("remark"),
+                    devicePartID = rs.getInt("devicePartID"),
+                    devicePartName = rs.getString("devicePartName")
+                )
+            }.firstOrNull() ?: throw IllegalStateException("No item found with the given RFID")
+        } as GetItemByRFIDResponse
+    }
 }
