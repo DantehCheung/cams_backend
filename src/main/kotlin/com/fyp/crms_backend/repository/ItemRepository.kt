@@ -513,4 +513,75 @@ where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.RFID = ?
             }.firstOrNull() ?: throw IllegalStateException("No item found with the given RFID")
         } as GetItemByRFIDResponse
     }
+
+    //update location repository
+    data class DevicePartInfo(
+        val deviceID: Int,
+        val deviceName: String,
+        val devicePartID: Int,
+        val devicePartName: String,
+        val RFID: String
+    )
+
+    fun getDevicePartsByRFIDs(rfids: List<String>): List<DevicePartInfo> {
+        val placeholders = rfids.joinToString(",") { "?" }
+        val sql = """
+        SELECT d.deviceID, d.deviceName, dp.devicePartID, dp.devicePartName, dr.RFID
+        FROM Device d
+        JOIN DevicePart dp ON d.deviceID = dp.deviceID
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID AND dp.devicePartID = dr.devicePartID
+        WHERE dr.RFID IN ($placeholders)
+        AND d.state != 'D' AND dp.state = 'A' AND dr.state = 'A'
+    """
+        return jdbcTemplate.query(sql, rfids.toTypedArray()) { rs, _ ->
+            DevicePartInfo(
+                rs.getInt("deviceID"),
+                rs.getString("deviceName"),
+                rs.getInt("devicePartID"),
+                rs.getString("devicePartName"),
+                rs.getString("RFID")
+            )
+        }
+    }
+
+
+    fun getExpectedPartsForDevice(deviceID: Int): List<DevicePartInfo> {
+        val sql = """
+        SELECT d.deviceID, d.deviceName, dp.devicePartID, dp.devicePartName, dr.RFID
+        FROM Device d
+        JOIN DevicePart dp ON d.deviceID = dp.deviceID
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID AND dp.devicePartID = dr.devicePartID
+        WHERE d.deviceID = ?
+        AND d.state != 'D' AND dp.state = 'A' AND dr.state = 'A'
+    """
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+            DevicePartInfo(
+                rs.getInt("deviceID"),
+                rs.getString("deviceName"),
+                rs.getInt("devicePartID"),
+                rs.getString("devicePartName"),
+                rs.getString("RFID")
+            )
+        }
+    }
+
+    @Transactional
+    fun updateDeviceLocation(deviceID: Int, roomID: Int) {
+        // Verify room exists
+        val roomExists = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM Room WHERE roomID = ? AND state = 'A'",
+            Int::class.java,
+            roomID
+        ) ?: 0
+
+        if (roomExists == 0) {
+            throw IllegalStateException("Room not found or not available")
+        }
+
+        // Update device location
+        jdbcTemplate.update(
+            "UPDATE Device SET roomID = ? WHERE deviceID = ?",
+            roomID, deviceID
+        )
+    }
 }

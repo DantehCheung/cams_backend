@@ -60,7 +60,16 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
-    // ItemController.kt
+    // Update Item Location
+    @PostMapping("updateItemLocation")
+    fun updateItemLocation(@RequestBody request: updateLocationByRFIDRequest): Response {
+        return process(request) {
+            return@process itemService.updateItemLocation(request)
+        }
+    }
+
+
+    //Manual Inventory item
     @PostMapping("/manualinventory")
     fun manualInventory(
         @RequestBody request: ManualInventoryRequest
