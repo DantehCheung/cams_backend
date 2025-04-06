@@ -82,6 +82,50 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
 
     }
 
+    //Update Item Location Service
+    fun updateItemLocation(request: updateLocationByRFIDRequest): updateLocationByRFIDResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val deviceParts = itemRepository.getDevicePartsByRFIDs(request.itemList)
+
+        if (deviceParts.isEmpty()) {
+            return updateLocationByRFIDResponse(emptyList())
+        }
+
+        val groupedByDevice = deviceParts.groupBy { it.deviceID }
+
+        val updateLists = mutableListOf<updateLocationByRFIDResponse.updateList>()
+
+        groupedByDevice.forEach { (deviceId, parts) ->
+
+            val expectedParts = itemRepository.getExpectedPartsForDevice(deviceId)
+
+            if (parts.size == expectedParts.size) {
+                itemRepository.updateDeviceLocation(deviceId, request.roomID)
+                updateLists.add(
+                    updateLocationByRFIDResponse.updateList(
+                        deviceName = parts.first().deviceName,
+                        successData = updateLocationByRFIDResponse.SuccessData("All parts scanned, location updated")
+                    )
+                )
+            } else {
+                val missingParts = expectedParts.filter { expected ->
+                    parts.none { scanned -> scanned.devicePartID == expected.devicePartID }
+                }
+                updateLists.add(
+                    updateLocationByRFIDResponse.updateList(
+                        deviceName = parts.first().deviceName,
+                        failData = updateLocationByRFIDResponse.FailData(
+                            "Missing parts",
+                            "Missing parts: ${missingParts.joinToString { it.devicePartName }}"
+                        )
+                    )
+                )
+            }
+        }
+
+        return updateLocationByRFIDResponse(updateLists)
+    }
 
     //Manual adjust item
     fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
