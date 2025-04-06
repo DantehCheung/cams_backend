@@ -26,14 +26,14 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
 
 
     // Add Item
-    fun addItem(request: AddItemRequest): StateResponse {
+    fun addItem(request: AddItemRequest): DeviceIdResponse {
 
         val data: Claims = decryptToken(request.token)
 
-        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
+        val deviceID = itemRepository.addItem(data.subject,request.device,request.deviceParts);
 
-        return StateResponse(
-            result
+        return DeviceIdResponse(
+            deviceID
         )
     }
 

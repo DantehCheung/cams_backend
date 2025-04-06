@@ -1,6 +1,7 @@
 package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.item.AddItemRequest.DevicePart
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -160,19 +161,16 @@ WHERE roomID = ?
 // 1. For each device, insert into 'device' and retrieve the new ID.
 // 2. Then insert docs and parts (and RFIDs) referencing that new ID.
     @Transactional
-    fun addItem(CNA: String, devices: List<DeviceWithParts>): Boolean {
+    fun addItem(CNA: String, device: AddItemRequest.Device,parts:List<AddItemRequest.DevicePart>): Int {
         return super.APIprocess(CNA, "add Device Data") {
-            devices.forEach { device ->
-                val deviceId = addSingleDevice(device)
-                addDocs(deviceId, device.deviceDoc)
-                addParts(deviceId, device.deviceParts)
-            }
-            return@APIprocess true
-        } as Boolean
+            val deviceID = addSingleDevice(device)
+            addParts(deviceID, parts)
+            return@APIprocess deviceID
+        } as Int
     }
 
 
-    private fun addSingleDevice(device: DeviceWithParts): Int {
+    private fun addSingleDevice(device: AddItemRequest.Device): Int {
         val keyHolder = org.springframework.jdbc.support.GeneratedKeyHolder()
         /*在插入資料時，GeneratedKeyHolder 會自動接收資料庫產生的主鍵 (常見為自增 ID)，並儲存在 keyHolder 中。
         接著可透過 keyHolder.key 或對應方法取得該新插入記錄的 ID 來進行後續操作。*/
@@ -198,7 +196,7 @@ WHERE roomID = ?
         return keyHolder.key?.toInt() ?: throw IllegalStateException("No generated key returned")
     }
 
-    private fun addDocs(deviceId: Int, docs: List<DeviceDoc>) {
+    fun addDocs(deviceId: Int, docs: List<AddItemRequest.DeviceDoc>) {
 
         docs.forEach { doc ->
             jdbcTemplate.update(
@@ -240,7 +238,7 @@ WHERE roomID = ?
         }
     }
 
-    private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<DeviceRFID>) {
+    private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<AddItemRequest.DeviceRFID>) {
 
         rfids.forEach { rfid ->
             jdbcTemplate.update({ con ->
