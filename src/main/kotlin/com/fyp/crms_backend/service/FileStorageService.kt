@@ -2,6 +2,7 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.FileStorageProperties
 import com.fyp.crms_backend.algorithm.Snowflake
+import com.fyp.crms_backend.dto.item.AddItemRequest.DeviceDoc
 import com.fyp.crms_backend.exception.FileStorageException
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
@@ -77,6 +78,10 @@ class FileStorageService(
         } catch (ex: IOException) {
             throw FileStorageException("Could not store file $fileName", ex)
         }
+
+        deviceRepository.addDocs(
+            deviceId, listOf(DeviceDoc("$deviceId/$fileName"))
+        )
 
         return fileName
     }
