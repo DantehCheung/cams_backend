@@ -59,7 +59,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
         val repo: Boolean = itemRepository.editItem(
             data.subject, request.deviceID, request.deviceName,
             request.price, request.orderDate, request.arriveDate, request.maintenanceDate, request.roomID,
-            request.state, request.remark, request.docs
+            request.state, request.remark
         )
 
         return StateResponse(

@@ -287,7 +287,7 @@ WHERE roomID = ?
     // Edit device (big)
     fun editItem(
         CNA: String, deviceID: Int, deviceName: String, price: BigDecimal, orderDate: LocalDate, arriveDate: LocalDate,
-        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String, docs: List<UpdatedDeviceDoc>
+        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String
     ): Boolean {
 
         return super.APIprocess(CNA, "editData") {
@@ -330,35 +330,37 @@ WHERE roomID = ?
                 deviceID
             ) ?: 0
 
-            if(docRow != docs.size){
-                throw IllegalStateException("Update DeviceDoc not success, the number of docs is not match")
-            }
 
+            // only allow Add Doc, should not let user edit doc, only can change state
+            /*
+              if(docRow != docs.size){
+                  throw IllegalStateException("Update DeviceDoc not success, the number of docs is not match")
+              }
 
             docs.forEach { doc ->
 
-                val ensurePath = jdbcTemplate.queryForObject(
-                    """SELECT COUNT(*) FROM DeviceDoc WHERE docPath = ?""",
-                    Int::class.java,
-                    doc.docPath
-                ) ?: 0
+                  val ensurePath = jdbcTemplate.queryForObject(
+                      """SELECT COUNT(*) FROM DeviceDoc WHERE docPath = ?""",
+                      Int::class.java,
+                      doc.docPath
+                  ) ?: 0
 
-                if (ensurePath == 0) {
-                    throw IllegalStateException("Update DeviceDoc not success, wrong docPath")
-                }
+                  if (ensurePath == 0) {
+                      throw IllegalStateException("Update DeviceDoc not success, wrong docPath")
+                  }
 
-                // DOC PATH IS PRIMARY KEY, CANNOT BE CHANGED
-                val docUpdate: Int = jdbcTemplate.update(
-                    """UPDATE DeviceDoc SET state = ? WHERE deviceID = ? AND docPath = ?""",
-                    doc.state.toString(), deviceID,doc.docPath
-                )
+                  // DOC PATH IS PRIMARY KEY, CANNOT BE CHANGED
+                  val docUpdate: Int = jdbcTemplate.update(
+                      """UPDATE DeviceDoc SET state = ? WHERE deviceID = ? AND docPath = ?""",
+                      doc.state.toString(), deviceID,doc.docPath
+                  )
 
-                // if one of the sql gg will throw error
-                if (docUpdate == 0) {
-                    throw IllegalStateException("Update DeviceDoc not success, wrong state")
-                }
+                  // if one of the sql gg will throw error
+                  if (docUpdate == 0) {
+                      throw IllegalStateException("Update DeviceDoc not success, wrong state")
+                  }
 
-            }
+              }*/
 
             return@APIprocess if (rowUpdate > 0 ) {
                 true
