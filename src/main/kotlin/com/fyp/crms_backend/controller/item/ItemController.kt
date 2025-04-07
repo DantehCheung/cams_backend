@@ -42,6 +42,8 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
+    //TO DO ADD RFID, ADD DOCS, DOWNLOAD FUNCTION
+
     @PostMapping("/updateitempart")
     fun editItemPart(
         @RequestBody request: EditItemPartRequest

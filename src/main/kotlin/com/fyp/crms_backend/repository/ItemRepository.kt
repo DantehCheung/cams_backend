@@ -486,8 +486,8 @@ WHERE roomID = ?
     }
 
     fun checkDeviceDocAvailable(docPath: String): Boolean {
-        val sql = "SELECT count(*) FROM devicedoc WHERE docPath = ? AND state = 'A';"
-        val count = jdbcTemplate.queryForObject(sql, Int::class.java, docPath) ?: 0
+        val sql = "SELECT count(*) FROM devicedoc WHERE docPath like ? AND state = 'A';"
+        val count = jdbcTemplate.queryForObject(sql, Int::class.java, "%$docPath") ?: 0
         return count > 0
     }
 

@@ -92,11 +92,8 @@ class FileStorageService(
         if (!filePath.startsWith(getDeviceDir(deviceId))) {
             throw FileNotFoundException("Cannot access file outside device directory")
         }
-        if (deviceRepository.checkDeviceDocAvailable(filePath.toString())) {
-            throw FileNotFoundException("File $fileName not found")
-        }
 
-        if (!Files.exists(filePath) || !deviceRepository.checkDeviceDocAvailable(filePath.toString())) {
+        if (!Files.exists(filePath) || !deviceRepository.checkDeviceDocAvailable(fileName)) {
             throw FileNotFoundException("File $fileName not found or not available")
         }
 
