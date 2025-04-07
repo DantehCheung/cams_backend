@@ -25,5 +25,11 @@ enum class Permission(val level: Int, val displayName: String) {
         fun getNameByLevel(level: Int): String {
             return values().find { it.level == level }?.displayName ?: "Unknown"
         }
+
+        fun maxLevel(): Int = values().maxOf { it.level }
+
+        fun getAllByLevel(level: Int): List<Permission> {
+            return values().filter { it.level == level }
+        }
     }
 }

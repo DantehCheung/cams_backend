@@ -19,10 +19,6 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
         return args.all { arg -> arg != null }
     }
 
-    private fun checkPermissions():Boolean{
-        // TODO: Check if the user has the required permissions
-        return true
-    }
 
 
     fun APIprocess(
@@ -37,9 +33,6 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
                 throw errorProcess("E01") // Arguments missing or invalid
             }
 
-            if (!checkPermissions()) {
-                throw errorProcess("E03")
-            }
 
             // Step 3: Execute the main process
             val result = main(args)
@@ -52,8 +45,8 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
 
 
             if (!logAdded) {
-                throw errorProcess("E05") // Database connection or query error
                 println("API success, but add log fail")
+                throw errorProcess("E05") // Database connection or query error
             }
 
             // Step 5: Return the result
@@ -73,8 +66,8 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
                 }")
 
             if (!logAdded) {
-                throw errorProcess("E05") // Database connection or query error
                 println("API and add log fail")
+                throw errorProcess("E05") // Database connection or query error
             }
             println(e.message)
             throw errorProcess("E06")
@@ -88,10 +81,6 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
         main: () -> Any?
     ): Any? {
         return try {
-
-            if (!checkPermissions()) {
-                throw errorProcess("E03")
-            }
 
             // Step 3: Execute the main process
             val result = main()

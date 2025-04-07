@@ -10,7 +10,8 @@ enum class ErrorCode(val description: String) {
     E06("Query Error"),
     E07("User Not Found"),
     E08("Invalid Password"),
-    E09("Invalid email format")
+    E09("Invalid email format"),
+    E10("Token Invalid")
     ;
 
     override fun toString(): String {
