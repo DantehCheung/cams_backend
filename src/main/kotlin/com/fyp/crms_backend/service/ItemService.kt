@@ -67,6 +67,42 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
         )
         }
 
+    // Add RFID
+    fun addRFID(request: AddRfidRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.addSingleRFID(
+            data.subject,request.RFID,request.deviceID,request.partID)
+
+        return StateResponse(
+            repo
+        )
+    }
+
+    // delete RFID
+    fun deleteRFID(request: DeleteRfidRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.deleteSingleRFID(
+            data.subject,request.RFID,request.deviceID,request.partID)
+
+        return StateResponse(
+            repo
+        )
+    }
+
+    // delete Doc
+    fun deleteDoc(request: DeleteDocRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.deleteSingleDoc(
+            data.subject,request.deviceID,request.partID,request.docPath)
+
+        return StateResponse(
+            repo
+        )
+    }
+
     // Edit Item Part
     fun editItemPart(request: EditItemPartRequest): StateResponse{
 

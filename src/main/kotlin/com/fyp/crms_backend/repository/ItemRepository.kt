@@ -370,11 +370,98 @@ WHERE roomID = ?
         } as Boolean
     } // end
 
+
+    // ADD/ASSIGN RFID
+    fun addSingleRFID(CNA:String,RFID: String,deviceID: Int,partId: Int): Boolean{
+        return super.APIprocess(CNA,"assign a RFID"){
+
+            val rfidcount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM DeviceRFID WHERE deviceID = ? AND RFID = ?""",
+                Int::class.java,
+                deviceID,
+                RFID
+            ) ?: 0
+
+            if (rfidcount > 0) {
+                throw IllegalStateException("Device has existed")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """INSERT INTO DeviceRFID (deviceID, devicePartID, RFID) VALUES (?, ?, ?) """,
+               deviceID,partId,RFID
+            )
+
+            return@APIprocess  if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+
+
+        } as Boolean
+    }
+
+
+    // DELETE RFID
+    fun deleteSingleRFID(CNA:String, RFID: String, deviceID: Int, partId: Int): Boolean {
+        return super.APIprocess(CNA, "delete a RFID") {
+            val rfidcount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM DeviceRFID WHERE devicePartID = ? AND RFID = ?""",
+                Int::class.java,
+                partId,
+                RFID
+            ) ?: 0
+
+            if (rfidcount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DeviceRFID SET state = 'D' WHERE devicePartID = ? AND RFID = ?""",
+                partId, RFID
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
+
+    // DELETE DEVICE DOC
+    fun deleteSingleDoc(CNA:String, deviceID: Int, partId: Int, docPath: String): Boolean {
+        return super.APIprocess(CNA, "delete a doc") {
+            val doccount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM DeviceDoc WHERE deviceID = ? AND docPath = ?""",
+                Int::class.java,
+                deviceID,
+                docPath
+            ) ?: 0
+
+            if (doccount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ? AND docPath = ?""",
+                deviceID, docPath
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
     fun editItemPart(CNA:String, deviceID: Int, partID: Int, partName: String, state: Char): Boolean {
         return super.APIprocess(CNA, "editData") {
             // Verify that the device exists and is not already marked as deleted.
             val devicecount = jdbcTemplate.queryForObject(
-                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND partID = ?""",
+                """SELECT COUNT(1) FROM DevicePart WHERE deviceID = ? AND devicePartID = ?""",
                 Int::class.java,
                 deviceID,
                 partID

@@ -42,7 +42,37 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
-    //TO DO ADD RFID, ADD DOCS, DOWNLOAD FUNCTION
+    //TO DO ADD RFID ,KILL RFID, ADD DOCS,edit,KILL DOC, DOWNLOAD FUNCTION (frontend)
+    @PostMapping("/assignrfid")
+    fun addRFID(
+        @RequestBody request: AddRfidRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.addRFID(request)
+        }
+    }
+
+    @PostMapping("/deleterfid")
+    fun deleteRFID(
+        @RequestBody request: DeleteRfidRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.deleteRFID(request)
+        }
+    }
+
+   // Add DeviceDoc maybe is not needed , cause have upload function
+
+    @PostMapping("/deletedoc")
+    fun deleteDoc(
+        @RequestBody request: DeleteDocRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.deleteDoc(request)
+        }
+    }
+
+
 
     @PostMapping("/updateitempart")
     fun editItemPart(
