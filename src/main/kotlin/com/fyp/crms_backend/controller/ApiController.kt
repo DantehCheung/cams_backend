@@ -6,7 +6,7 @@ import com.fyp.crms_backend.dto.error.ErrorResponse
 import com.fyp.crms_backend.exception.ErrorCodeException
 import org.springframework.web.bind.annotation.RequestBody
 
-open class ApiController {
+abstract class ApiController {
     fun process(@RequestBody request: Request, main: () -> Response): Response {
         try {
             return main()

@@ -1,7 +1,9 @@
 package com.fyp.crms_backend.repository
 
-import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.item.AddItemRequest
 import com.fyp.crms_backend.dto.item.AddItemRequest.DevicePart
+import com.fyp.crms_backend.dto.item.GetItemByRFIDResponse
+import com.fyp.crms_backend.dto.item.GetItemResponse
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -583,16 +585,16 @@ WHERE roomID = ?
             val sql = """
 select d.deviceID, deviceName, roomID,d.state as 'deviceState',remark,dp.devicePartID,devicePartName
 from device d
-inner join devicepart dp on d.deviceID = dp.devicePartID
-inner join devicerfid dr on d.deviceID = dr.deviceID
-where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.RFID = ?
+inner join devicepart dp on d.deviceID = dp.deviceID
+inner join devicerfid dr on d.deviceID = dr.deviceID and dr.devicePartID = dp.devicePartID
+where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.rfid = ?
             """
             jdbcTemplate.query(sql, arrayOf(RFID)) { rs, _ ->
                 GetItemByRFIDResponse(
                     deviceID = rs.getInt("deviceID"),
                     deviceName = rs.getString("deviceName"),
                     roomID = rs.getInt("roomID"),
-                    deviceState = rs.getString("state"),
+                    deviceState = rs.getString("deviceState"),
                     remark = rs.getString("remark"),
                     devicePartID = rs.getInt("devicePartID"),
                     devicePartName = rs.getString("devicePartName")

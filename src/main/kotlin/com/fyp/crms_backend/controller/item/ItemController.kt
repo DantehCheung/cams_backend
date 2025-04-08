@@ -115,6 +115,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     fun getItemByRFID(
         @RequestBody request: GetItemByRFIDRequest
     ): Response {
+        print(request)
         return process(request) {
             return@process itemService.getItemByRFID(request)
         }

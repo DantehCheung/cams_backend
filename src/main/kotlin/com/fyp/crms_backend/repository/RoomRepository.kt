@@ -117,4 +117,21 @@ class RoomRepository(
         } as Boolean
     }
 
+    fun newRoom(CNA: String, roomID: Int, roomRFID: String): Boolean {
+        return super.APIprocess(CNA, "New Room") {
+            // write for me
+            val row: Int = jdbcTemplate.update(
+                """ insert into roomrfid (roomID,rfid)values( ?,  ?)""".trimIndent(),
+                roomID,
+                roomRFID
+            )
+            return@APIprocess if (row > 0) {
+                true
+            } else {
+                false
+            }
+
+        } as Boolean
+    } // newRoom
+
 } // class
