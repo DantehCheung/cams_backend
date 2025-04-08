@@ -69,4 +69,14 @@ class RoomService(private val roomRepository: RoomRepository, jwt: JWT, jdbcTemp
             result
         )
     }
+
+    fun newRoom(request: NewRoomRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val result: Boolean = roomRepository.newRoom(data.subject, request.roomID, request.roomRFID)
+
+        return StateResponse(
+            result
+        )
+    }
 }

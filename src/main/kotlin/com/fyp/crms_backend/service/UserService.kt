@@ -75,16 +75,9 @@ class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemp
     // ADD USER
     fun addUser(request: AddUserRequest): StateResponse {
         val data: Claims = decryptToken(request.token) // decrypt token
-        val status: Boolean = userRepository.addUser(
+        val status: Boolean = userRepository.addUsers(
             data.subject,
-            request.CNA,
-            request.emailDomain,
-            request.password,
-            request.accessLevel,
-            request.firstName,
-            request.lastName,
-            request.contentNo,
-            request.campusID
+            request.userList
         )
 
         return StateResponse(status = status)

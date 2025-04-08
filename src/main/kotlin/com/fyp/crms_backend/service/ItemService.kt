@@ -26,14 +26,14 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
 
 
     // Add Item
-    fun addItem(request: AddItemRequest): StateResponse {
+    fun addItem(request: AddItemRequest): DeviceIdResponse {
 
         val data: Claims = decryptToken(request.token)
 
-        val result: Boolean = itemRepository.addItem(data.subject,request.devices);
+        val deviceID = itemRepository.addItem(data.subject,request.device,request.deviceParts);
 
-        return StateResponse(
-            result
+        return DeviceIdResponse(
+            deviceID
         )
     }
 
@@ -59,13 +59,49 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
         val repo: Boolean = itemRepository.editItem(
             data.subject, request.deviceID, request.deviceName,
             request.price, request.orderDate, request.arriveDate, request.maintenanceDate, request.roomID,
-            request.state, request.remark, request.docs
+            request.state, request.remark
         )
 
         return StateResponse(
             repo
         )
         }
+
+    // Add RFID
+    fun addRFID(request: AddRfidRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.addSingleRFID(
+            data.subject,request.RFID,request.deviceID,request.partID)
+
+        return StateResponse(
+            repo
+        )
+    }
+
+    // delete RFID
+    fun deleteRFID(request: DeleteRfidRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.deleteSingleRFID(
+            data.subject,request.RFID,request.deviceID,request.partID)
+
+        return StateResponse(
+            repo
+        )
+    }
+
+    // delete Doc
+    fun deleteDoc(request: DeleteDocRequest): StateResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo: Boolean = itemRepository.deleteSingleDoc(
+            data.subject,request.deviceID,request.partID,request.docPath)
+
+        return StateResponse(
+            repo
+        )
+    }
 
     // Edit Item Part
     fun editItemPart(request: EditItemPartRequest): StateResponse{
@@ -82,6 +118,50 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
 
     }
 
+    //Update Item Location Service
+    fun updateItemLocation(request: updateLocationByRFIDRequest): updateLocationByRFIDResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val deviceParts = itemRepository.getDevicePartsByRFIDs(request.itemList)
+
+        if (deviceParts.isEmpty()) {
+            return updateLocationByRFIDResponse(emptyList())
+        }
+
+        val groupedByDevice = deviceParts.groupBy { it.deviceID }
+
+        val updateLists = mutableListOf<updateLocationByRFIDResponse.updateList>()
+
+        groupedByDevice.forEach { (deviceId, parts) ->
+
+            val expectedParts = itemRepository.getExpectedPartsForDevice(deviceId)
+
+            if (parts.size == expectedParts.size) {
+                itemRepository.updateDeviceLocation(deviceId, request.roomID)
+                updateLists.add(
+                    updateLocationByRFIDResponse.updateList(
+                        deviceName = parts.first().deviceName,
+                        successData = updateLocationByRFIDResponse.SuccessData("All parts scanned, location updated")
+                    )
+                )
+            } else {
+                val missingParts = expectedParts.filter { expected ->
+                    parts.none { scanned -> scanned.devicePartID == expected.devicePartID }
+                }
+                updateLists.add(
+                    updateLocationByRFIDResponse.updateList(
+                        deviceName = parts.first().deviceName,
+                        failData = updateLocationByRFIDResponse.FailData(
+                            "Missing parts",
+                            "Missing parts: ${missingParts.joinToString { it.devicePartName }}"
+                        )
+                    )
+                )
+            }
+        }
+
+        return updateLocationByRFIDResponse(updateLists)
+    }
 
     //Manual adjust item
     fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
@@ -136,6 +216,14 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
                     .thenBy { it.afterState }
             )
         )
+    }
+
+    fun getItemByRFID(request: GetItemByRFIDRequest): GetItemByRFIDResponse {
+        val data: Claims = decryptToken(request.token)
+
+        val repo = itemRepository.getItemByRFID(data.subject, request.RFID)
+
+        return repo
     }
 }
 

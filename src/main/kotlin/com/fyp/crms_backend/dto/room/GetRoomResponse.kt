@@ -10,5 +10,5 @@ data class GetRoomResponse(
         val campusId: Int,
         val roomNumber: String,
         val roomName: String,
-    )
+    ):Response
 }

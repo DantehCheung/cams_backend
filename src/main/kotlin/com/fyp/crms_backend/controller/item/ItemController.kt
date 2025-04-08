@@ -42,6 +42,38 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
+    //TO DO ADD RFID ,KILL RFID, ADD DOCS,edit,KILL DOC, DOWNLOAD FUNCTION (frontend)
+    @PostMapping("/assignrfid")
+    fun addRFID(
+        @RequestBody request: AddRfidRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.addRFID(request)
+        }
+    }
+
+    @PostMapping("/deleterfid")
+    fun deleteRFID(
+        @RequestBody request: DeleteRfidRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.deleteRFID(request)
+        }
+    }
+
+   // Add DeviceDoc maybe is not needed , cause have upload function
+
+    @PostMapping("/deletedoc")
+    fun deleteDoc(
+        @RequestBody request: DeleteDocRequest
+    ) : Response {
+        return process(request){
+            return@process itemService.deleteDoc(request)
+        }
+    }
+
+
+
     @PostMapping("/updateitempart")
     fun editItemPart(
         @RequestBody request: EditItemPartRequest
@@ -60,13 +92,32 @@ class ItemController(private val itemService: ItemService) : ApiController(){
         }
     }
 
-    // ItemController.kt
+    // Update Item Location
+    @PostMapping("updateItemLocation")
+    fun updateItemLocation(@RequestBody request: updateLocationByRFIDRequest): Response {
+        return process(request) {
+            return@process itemService.updateItemLocation(request)
+        }
+    }
+
+
+    //Manual Inventory item
     @PostMapping("/manualinventory")
     fun manualInventory(
         @RequestBody request: ManualInventoryRequest
     ): Response {
         return process(request) {
             return@process itemService.processManualInventory(request)
+        }
+    }
+
+    @PostMapping("/getitembyrfid")
+    fun getItemByRFID(
+        @RequestBody request: GetItemByRFIDRequest
+    ): Response {
+        print(request)
+        return process(request) {
+            return@process itemService.getItemByRFID(request)
         }
     }
 

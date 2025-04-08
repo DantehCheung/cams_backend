@@ -1,6 +1,8 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.entity.CAMSDB
+import com.fyp.crms_backend.utils.AccessPagePermission.Companion.defaultAccessPage
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.queryForObject
@@ -28,7 +30,12 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         )
     }
 
-    fun findByCNAAndPassword(CNA: String, domainPart: String?, password: String, ipAddress: String): CAMSDB.User? {
+    fun findByCNAAndPassword(
+        CNA: String,
+        domainPart: String?,
+        password: String,
+        ipAddress: String
+    ): CAMSDB.User? {
         return super.APIprocess(CNA, "login by username/pw in ip: $ipAddress") {
 
 
@@ -187,11 +194,36 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         } as Boolean
     }
 
-
-
-
-    fun addUser(
+    @Transactional
+    fun addUsers(
         CNA: String,
+        userList: List<AddUserRequest.User>
+    ): Boolean {
+        return super.APIprocess(CNA, "Add User Data") {
+            var state = true
+            for (user in userList) {
+                val result = addUser(
+                    user.CNA,
+                    user.emailDomain,
+                    user.password,
+                    user.accessLevel,
+                    user.accessPage,
+                    user.firstName,
+                    user.lastName,
+                    user.contentNo,
+                    user.campusID
+
+                )
+                if (!result) {
+                    state = false
+                }
+            }
+            return@APIprocess state
+        } as Boolean
+    } // end add users
+
+    @Transactional
+    fun performInsert(
         cnaToInsert: String,
         emailDomain: String?,
         password: String,
@@ -199,59 +231,90 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         firstName: String,
         lastName: String,
         contentNo: String,
+        campusID: Int,
+        salt: String = getRandomString(5),
+        accessPage: Int?
+    ): Boolean {
+        val rowsUpdated = jdbcTemplate.update(
+            """INSERT INTO user (CNA, emailDomain, salt, password, accessLevel, accessPage, firstName, lastName, contentNo, campusID, loginFail)
+                   VALUES (?, ?, ?, CONCAT('0', SHA2(CONCAT(?, ?), 256)), ?, ?, ?, ?, ?, ?, 0)""",
+            cnaToInsert,
+            emailDomain,
+            salt,
+            password,
+            salt,
+            accessLevel,
+            accessPage,
+            firstName,
+            lastName,
+            contentNo,
+            campusID
+        )
+        if (rowsUpdated > 0) {
+            return true
+        } else {
+            throw RuntimeException("Failed to add user")
+        }
+    }
+
+
+
+    private fun addUser(
+        cnaToInsert: String,
+        emailDomain: String?,
+        password: String,
+        accessLevel: Int,
+        accessPage: Int? = null,
+        firstName: String,
+        lastName: String,
+        contentNo: String,
         campusID: Int
     ): Boolean {
-        return super.APIprocess(CNA, "Add User Data") {
-            val count = jdbcTemplate.queryForObject(
-                """SELECT COUNT(*) FROM user WHERE CNA = ?""",
-                Int::class.java,
-                cnaToInsert
-            ) ?: 0
+        val count = jdbcTemplate.queryForObject(
+            """SELECT COUNT(*) FROM user WHERE CNA = ?""",
+            Int::class.java,
+            cnaToInsert
+        ) ?: 0
 
-            // If user exists, throw an exception.
-           return@APIprocess if (count > 0) {
-                throw RuntimeException("User already exists")
-            }else {
+        // If user exists, throw an exception.
+        return if (count > 0) {
+            throw RuntimeException("User already exists")
+        } else {
 
-                val salt = getRandomString(5)
-                val accessPage: Int = when (accessLevel) {
-                    0 -> 65535
-                    100 -> 63487
-                    1000 -> 1540
-                    else -> 0
-                }
-
-               // In order to show fail log, I put the transactional tag here. by Danteh
-               @Transactional
-                fun performInsert(){
-                    val rowsUpdated = jdbcTemplate.update(
-                        """INSERT INTO user (CNA, emailDomain, salt, password, accessLevel, accessPage, firstName, lastName, contentNo, campusID, loginFail)
-                   VALUES (?, ?, ?, CONCAT('0', SHA2(CONCAT(?, ?), 256)), ?, ?, ?, ?, ?, ?, 0)""",
-                        cnaToInsert,
-                        emailDomain,
-                        salt,
-                        password,
-                        salt,
-                        accessLevel,
-                        accessPage,
-                        firstName,
-                        lastName,
-                        contentNo,
-                        campusID
-                    )
-                    if (rowsUpdated > 0) {
-                        true
-                    } else {
-                        throw RuntimeException("Failed to add user")
-                    }
-                }
-
-                performInsert()
-
+            val salt = getRandomString(5)
+            if (accessPage == null){
+                // If accessPage is null, set it to the default value based on accessLevel
+                val defaultAccessPage = defaultAccessPage(accessLevel)
+                performInsert(
+                    cnaToInsert,
+                    emailDomain,
+                    password,
+                    accessLevel,
+                    firstName,
+                    lastName,
+                    contentNo,
+                    campusID,
+                    salt,
+                    defaultAccessPage
+                )
+            } else {
+                performInsert(
+                    cnaToInsert,
+                    emailDomain,
+                    password,
+                    accessLevel,
+                    firstName,
+                    lastName,
+                    contentNo,
+                    campusID,
+                    salt,
+                    accessPage
+                )
             }
-        } as Boolean
-    } // end add user
 
+        }
+
+    } // end add user
 
 
 } // end class

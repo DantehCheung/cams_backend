@@ -4,12 +4,17 @@ import com.fyp.crms_backend.dto.Request
 
 data class AddUserRequest(
     val token: String,
-    val CNA: String,
-    val emailDomain:String? = "stu.vtc.edu.hk",
-    val password: String,
-    val accessLevel: Int,
-    val firstName: String,
-    val lastName: String,
-    val contentNo: String,
-    val campusID: Int,
-) : Request
+    val userList:List<User>
+) : Request{
+    data class User(
+        val CNA: String,
+        val emailDomain:String,
+        val password: String,
+        val accessLevel: Int,
+        val accessPage: Int? = null,
+        val firstName: String,
+        val lastName: String,
+        val contentNo: String,
+        val campusID: Int,
+    )
+}

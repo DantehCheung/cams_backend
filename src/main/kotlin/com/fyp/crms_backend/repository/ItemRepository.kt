@@ -1,6 +1,9 @@
 package com.fyp.crms_backend.repository
 
-import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.item.AddItemRequest
+import com.fyp.crms_backend.dto.item.AddItemRequest.DevicePart
+import com.fyp.crms_backend.dto.item.GetItemByRFIDResponse
+import com.fyp.crms_backend.dto.item.GetItemResponse
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +22,7 @@ SELECT *
 FROM Device 
 WHERE roomID = ?
     """
+
             if (stateList != null && stateList.isNotEmpty()) {
                 val placeholders = stateList.joinToString(",") { "?" }
                 sqlDevices += " AND state IN ($placeholders)"
@@ -51,58 +55,52 @@ WHERE roomID = ?
     }
 
     fun fetchDeviceDocs(deviceID: Int): List<GetItemResponse.DeviceDoc> {
-        return super.APIprocess("fetchDeviceDocs", "fetch device documents") {
             val sql = """
                 SELECT *
                 FROM DeviceDoc
                 WHERE deviceID = ? and state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DeviceDoc(
                     deviceID = rs.getInt("deviceID"),
                     docPath = rs.getString("docPath")
                 )
             }
-        } as List<GetItemResponse.DeviceDoc>
     }
 
     fun fetchDeviceParts(deviceID: Int): List<GetItemResponse.DevicePartID> {
-        return super.APIprocess("fetchDeviceParts", "fetch device parts") {
             val sql = """
                 SELECT *
                 FROM DevicePart
                 WHERE deviceID = ? and state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DevicePartID(
                     deviceID = rs.getInt("deviceID"),
                     devicePartID = rs.getInt("devicePartID"),
                     devicePartName = rs.getString("devicePartName")
                 )
             }
-        } as List<GetItemResponse.DevicePartID>
     }
 
     fun fetchDeviceRFIDs(deviceID: Int): List<GetItemResponse.DeviceRFID> {
-        return super.APIprocess("fetchDeviceRFIDs", "fetch device RFIDs") {
             val sql = """
                 SELECT *
                 FROM DeviceRFID
                 WHERE deviceID = ? and state = 'A'
             """
-            jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
                 GetItemResponse.DeviceRFID(
                     deviceID = rs.getInt("deviceID"),
                     devicePartID = rs.getInt("devicePartID"),
                     RFID = rs.getString("RFID")
                 )
             }
-        } as List<GetItemResponse.DeviceRFID>
     }
 
     private fun fetchDeviceDocs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceDoc>> {
-        return super.APIprocess("fetchDeviceDocs", "fetch multiple device documents") {
-            jdbcTemplate.query(
+
+        return jdbcTemplate.query(
                 """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()} ) and state = 'A'"""
             ) { rs, _ ->
                 GetItemResponse.DeviceDoc(
@@ -110,12 +108,11 @@ WHERE roomID = ?
                     docPath = rs.getString("docPath")
                 )
             }.groupBy { it.deviceID }
-        } as Map<Int?, List<GetItemResponse.DeviceDoc>>
     }
 
     private fun fetchDeviceParts(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DevicePartID>> {
-        return super.APIprocess("fetchDeviceParts", "fetch multiple device parts") {
-            jdbcTemplate.query(
+
+        return jdbcTemplate.query(
                 """
                     SELECT
                         deviceID,
@@ -131,12 +128,10 @@ WHERE roomID = ?
                     devicePartName = rs.getString("devicePartName")
                 )
             }.groupBy { it.deviceID }
-        } as Map<Int?, List<GetItemResponse.DevicePartID>>
     }
 
     private fun fetchDeviceRFIDs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceRFID>> {
-        return super.APIprocess("fetchDeviceRFIDs", "fetch multiple device RFIDs") {
-            jdbcTemplate.query(
+        return jdbcTemplate.query(
                 """
                     SELECT
                         deviceID,
@@ -152,7 +147,7 @@ WHERE roomID = ?
                     RFID = rs.getString("RFID")
                 )
             }.groupBy { it.deviceID }
-        } as Map<Int?, List<GetItemResponse.DeviceRFID>>
+
     }
 
 
@@ -160,19 +155,16 @@ WHERE roomID = ?
 // 1. For each device, insert into 'device' and retrieve the new ID.
 // 2. Then insert docs and parts (and RFIDs) referencing that new ID.
     @Transactional
-    fun addItem(CNA: String, devices: List<DeviceWithParts>): Boolean {
+    fun addItem(CNA: String, device: AddItemRequest.Device,parts:List<AddItemRequest.DevicePart>): Int {
         return super.APIprocess(CNA, "add Device Data") {
-            devices.forEach { device ->
-                val deviceId = addSingleDevice(device)
-                addDocs(deviceId, device.deviceDoc)
-                addParts(deviceId, device.deviceParts)
-            }
-            return@APIprocess true
-        } as Boolean
+            val deviceID = addSingleDevice(device)
+            addParts(deviceID, parts)
+            return@APIprocess deviceID
+        } as Int
     }
 
 
-    private fun addSingleDevice(device: DeviceWithParts): Int {
+    private fun addSingleDevice(device: AddItemRequest.Device): Int {
         val keyHolder = org.springframework.jdbc.support.GeneratedKeyHolder()
         /*在插入資料時，GeneratedKeyHolder 會自動接收資料庫產生的主鍵 (常見為自增 ID)，並儲存在 keyHolder 中。
         接著可透過 keyHolder.key 或對應方法取得該新插入記錄的 ID 來進行後續操作。*/
@@ -198,7 +190,7 @@ WHERE roomID = ?
         return keyHolder.key?.toInt() ?: throw IllegalStateException("No generated key returned")
     }
 
-    private fun addDocs(deviceId: Int, docs: List<DeviceDoc>) {
+    fun addDocs(deviceId: Int, docs: List<AddItemRequest.DeviceDoc>) {
 
         docs.forEach { doc ->
             jdbcTemplate.update(
@@ -240,7 +232,7 @@ WHERE roomID = ?
         }
     }
 
-    private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<DeviceRFID>) {
+    private fun addRFIDs(deviceID: Int, partId: Int, rfids: List<AddItemRequest.DeviceRFID>) {
 
         rfids.forEach { rfid ->
             jdbcTemplate.update({ con ->
@@ -297,7 +289,7 @@ WHERE roomID = ?
     // Edit device (big)
     fun editItem(
         CNA: String, deviceID: Int, deviceName: String, price: BigDecimal, orderDate: LocalDate, arriveDate: LocalDate,
-        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String, docs: List<UpdatedDeviceDoc>
+        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String
     ): Boolean {
 
         return super.APIprocess(CNA, "editData") {
@@ -340,35 +332,37 @@ WHERE roomID = ?
                 deviceID
             ) ?: 0
 
-            if(docRow != docs.size){
-                throw IllegalStateException("Update DeviceDoc not success, the number of docs is not match")
-            }
 
+            // only allow Add Doc, should not let user edit doc, only can change state
+            /*
+              if(docRow != docs.size){
+                  throw IllegalStateException("Update DeviceDoc not success, the number of docs is not match")
+              }
 
             docs.forEach { doc ->
 
-                val ensurePath = jdbcTemplate.queryForObject(
-                    """SELECT COUNT(*) FROM DeviceDoc WHERE docPath = ?""",
-                    Int::class.java,
-                    doc.docPath
-                ) ?: 0
+                  val ensurePath = jdbcTemplate.queryForObject(
+                      """SELECT COUNT(*) FROM DeviceDoc WHERE docPath = ?""",
+                      Int::class.java,
+                      doc.docPath
+                  ) ?: 0
 
-                if (ensurePath == 0) {
-                    throw IllegalStateException("Update DeviceDoc not success, wrong docPath")
-                }
+                  if (ensurePath == 0) {
+                      throw IllegalStateException("Update DeviceDoc not success, wrong docPath")
+                  }
 
-                // DOC PATH IS PRIMARY KEY, CANNOT BE CHANGED
-                val docUpdate: Int = jdbcTemplate.update(
-                    """UPDATE DeviceDoc SET state = ? WHERE deviceID = ? AND docPath = ?""",
-                    doc.state.toString(), deviceID,doc.docPath
-                )
+                  // DOC PATH IS PRIMARY KEY, CANNOT BE CHANGED
+                  val docUpdate: Int = jdbcTemplate.update(
+                      """UPDATE DeviceDoc SET state = ? WHERE deviceID = ? AND docPath = ?""",
+                      doc.state.toString(), deviceID,doc.docPath
+                  )
 
-                // if one of the sql gg will throw error
-                if (docUpdate == 0) {
-                    throw IllegalStateException("Update DeviceDoc not success, wrong state")
-                }
+                  // if one of the sql gg will throw error
+                  if (docUpdate == 0) {
+                      throw IllegalStateException("Update DeviceDoc not success, wrong state")
+                  }
 
-            }
+              }*/
 
             return@APIprocess if (rowUpdate > 0 ) {
                 true
@@ -378,11 +372,98 @@ WHERE roomID = ?
         } as Boolean
     } // end
 
+
+    // ADD/ASSIGN RFID
+    fun addSingleRFID(CNA:String,RFID: String,deviceID: Int,partId: Int): Boolean{
+        return super.APIprocess(CNA,"assign a RFID"){
+
+            val rfidcount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM DeviceRFID WHERE deviceID = ? AND RFID = ?""",
+                Int::class.java,
+                deviceID,
+                RFID
+            ) ?: 0
+
+            if (rfidcount > 0) {
+                throw IllegalStateException("Device has existed")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """INSERT INTO DeviceRFID (deviceID, devicePartID, RFID) VALUES (?, ?, ?) """,
+               deviceID,partId,RFID
+            )
+
+            return@APIprocess  if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+
+
+        } as Boolean
+    }
+
+
+    // DELETE RFID
+    fun deleteSingleRFID(CNA:String, RFID: String, deviceID: Int, partId: Int): Boolean {
+        return super.APIprocess(CNA, "delete a RFID") {
+            val rfidcount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM DeviceRFID WHERE devicePartID = ? AND RFID = ?""",
+                Int::class.java,
+                partId,
+                RFID
+            ) ?: 0
+
+            if (rfidcount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DeviceRFID SET state = 'D' WHERE devicePartID = ? AND RFID = ?""",
+                partId, RFID
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
+
+    // DELETE DEVICE DOC
+    fun deleteSingleDoc(CNA:String, deviceID: Int, partId: Int, docPath: String): Boolean {
+        return super.APIprocess(CNA, "delete a doc") {
+            val doccount = jdbcTemplate.queryForObject(
+                """SELECT COUNT(1) FROM DeviceDoc WHERE deviceID = ? AND docPath = ?""",
+                Int::class.java,
+                deviceID,
+                docPath
+            ) ?: 0
+
+            if (doccount == 0) {
+                throw IllegalStateException("Device not found or already deleted")
+            }
+
+            val rowUpdate = jdbcTemplate.update(
+                """UPDATE DeviceDoc SET state = 'D' WHERE deviceID = ? AND docPath = ?""",
+                deviceID, docPath
+            )
+
+            return@APIprocess if (rowUpdate > 0) {
+                true
+            } else {
+                false
+            }
+        } as Boolean
+    }
+
     fun editItemPart(CNA:String, deviceID: Int, partID: Int, partName: String, state: Char): Boolean {
         return super.APIprocess(CNA, "editData") {
             // Verify that the device exists and is not already marked as deleted.
             val devicecount = jdbcTemplate.queryForObject(
-                """SELECT COUNT(1) FROM Device WHERE deviceID = ? AND partID = ?""",
+                """SELECT COUNT(1) FROM DevicePart WHERE deviceID = ? AND devicePartID = ?""",
                 Int::class.java,
                 deviceID,
                 partID
@@ -494,8 +575,102 @@ WHERE roomID = ?
     }
 
     fun checkDeviceDocAvailable(docPath: String): Boolean {
-        val sql = "SELECT count(*) FROM devicedoc WHERE docPath = ? AND state = 'A';"
-        val count = jdbcTemplate.queryForObject(sql, Int::class.java, docPath) ?: 0
+        val sql = "SELECT count(*) FROM devicedoc WHERE docPath like ? AND state = 'A';"
+        val count = jdbcTemplate.queryForObject(sql, Int::class.java, "%$docPath") ?: 0
         return count > 0
+    }
+
+    fun getItemByRFID(CNA: String, RFID: String): GetItemByRFIDResponse {
+        return super.APIprocess(CNA, "get item by RFID") {
+            val sql = """
+select d.deviceID, deviceName, roomID,d.state as 'deviceState',remark,dp.devicePartID,devicePartName
+from device d
+inner join devicepart dp on d.deviceID = dp.deviceID
+inner join devicerfid dr on d.deviceID = dr.deviceID and dr.devicePartID = dp.devicePartID
+where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.rfid = ?
+            """
+            jdbcTemplate.query(sql, arrayOf(RFID)) { rs, _ ->
+                GetItemByRFIDResponse(
+                    deviceID = rs.getInt("deviceID"),
+                    deviceName = rs.getString("deviceName"),
+                    roomID = rs.getInt("roomID"),
+                    deviceState = rs.getString("deviceState"),
+                    remark = rs.getString("remark"),
+                    devicePartID = rs.getInt("devicePartID"),
+                    devicePartName = rs.getString("devicePartName")
+                )
+            }.firstOrNull() ?: throw IllegalStateException("No item found with the given RFID")
+        } as GetItemByRFIDResponse
+    }
+
+    //update location repository
+    data class DevicePartInfo(
+        val deviceID: Int,
+        val deviceName: String,
+        val devicePartID: Int,
+        val devicePartName: String,
+        val RFID: String
+    )
+
+    fun getDevicePartsByRFIDs(rfids: List<String>): List<DevicePartInfo> {
+        val placeholders = rfids.joinToString(",") { "?" }
+        val sql = """
+        SELECT d.deviceID, d.deviceName, dp.devicePartID, dp.devicePartName, dr.RFID
+        FROM Device d
+        JOIN DevicePart dp ON d.deviceID = dp.deviceID
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID AND dp.devicePartID = dr.devicePartID
+        WHERE dr.RFID IN ($placeholders)
+        AND d.state != 'D' AND dp.state = 'A' AND dr.state = 'A'
+    """
+        return jdbcTemplate.query(sql, rfids.toTypedArray()) { rs, _ ->
+            DevicePartInfo(
+                rs.getInt("deviceID"),
+                rs.getString("deviceName"),
+                rs.getInt("devicePartID"),
+                rs.getString("devicePartName"),
+                rs.getString("RFID")
+            )
+        }
+    }
+
+
+    fun getExpectedPartsForDevice(deviceID: Int): List<DevicePartInfo> {
+        val sql = """
+        SELECT d.deviceID, d.deviceName, dp.devicePartID, dp.devicePartName, dr.RFID
+        FROM Device d
+        JOIN DevicePart dp ON d.deviceID = dp.deviceID
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID AND dp.devicePartID = dr.devicePartID
+        WHERE d.deviceID = ?
+        AND d.state != 'D' AND dp.state = 'A' AND dr.state = 'A'
+    """
+        return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
+            DevicePartInfo(
+                rs.getInt("deviceID"),
+                rs.getString("deviceName"),
+                rs.getInt("devicePartID"),
+                rs.getString("devicePartName"),
+                rs.getString("RFID")
+            )
+        }
+    }
+
+    @Transactional
+    fun updateDeviceLocation(deviceID: Int, roomID: Int) {
+        // Verify room exists
+        val roomExists = jdbcTemplate.queryForObject(
+            "SELECT COUNT(1) FROM Room WHERE roomID = ? AND state = 'A'",
+            Int::class.java,
+            roomID
+        ) ?: 0
+
+        if (roomExists == 0) {
+            throw IllegalStateException("Room not found or not available")
+        }
+
+        // Update device location
+        jdbcTemplate.update(
+            "UPDATE Device SET roomID = ? WHERE deviceID = ?",
+            roomID, deviceID
+        )
     }
 }

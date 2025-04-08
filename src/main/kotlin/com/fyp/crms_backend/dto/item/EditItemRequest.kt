@@ -5,10 +5,6 @@ import com.fyp.crms_backend.dto.Request
 import java.math.BigDecimal
 import java.time.LocalDate
 
-data class UpdatedDeviceDoc(
-    val docPath: String,
-    val state: Char
-)
 
 data class EditItemRequest (
     val token: String,
@@ -21,5 +17,4 @@ data class EditItemRequest (
     val roomID: Int,
     val state: Char,
     val remark: String,
-    val docs: List<UpdatedDeviceDoc>,
 ) : Request
