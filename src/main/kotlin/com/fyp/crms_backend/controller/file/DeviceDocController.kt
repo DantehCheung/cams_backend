@@ -1,5 +1,6 @@
-package com.fyp.crms_backend.controller
+package com.fyp.crms_backend.controller.file
 
+import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
 import com.fyp.crms_backend.dto.file.fileListResponse
 import com.fyp.crms_backend.dto.tokenRequest
@@ -13,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/files/devicedoc")
-class FileController(
+class DeviceDocController(
     private val storageService: FileStorageService,
     private val jwt: JWT
 ) : ApiController() {

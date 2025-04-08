@@ -5,6 +5,7 @@ import com.fyp.crms_backend.exception.ErrorCodeException
 import com.fyp.crms_backend.utils.ErrorCode
 import com.fyp.crms_backend.utils.Logger
 import org.springframework.dao.DataAccessException
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 
@@ -21,59 +22,59 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
 
 
 
-    fun APIprocess(
-        CNA: String,
-        args: Array<out Any?> = arrayOf(),
-        logMsg: String,
-        main: (args: Array<out Any?>) -> Any?
-    ): Any? {
-        return try {
-            // Step 2: Check argument validity
-            if (!checkArg(args)) {
-                throw errorProcess("E01") // Arguments missing or invalid
-            }
-
-
-            // Step 3: Execute the main process
-            val result = main(args)
-
-            // Step 4: Add log on success
-            val logAdded = addLog(
-                CNA, "successful: $logMsg"
-            )
-
-
-
-            if (!logAdded) {
-                println("API success, but add log fail")
-                throw errorProcess("E05") // Database connection or query error
-            }
-
-            // Step 5: Return the result
-            return result
-        } catch (e: ErrorCodeException) {
-            throw e
-        } catch (e: Exception) {
-            // Generic error handler (e.g., unexpected exceptions)
-            val logAdded = addLog(
-                CNA, "fail: $logMsg with (${e.message})\n${
-                    args.joinToString { arg ->
-                        when (arg) {
-                            is RowMapper<*> -> "RowMapper instance"
-                            else -> arg?.toString() ?: "null:${arg!!::class.simpleName}"
-                        }
-                    }
-                }")
-
-            if (!logAdded) {
-                println("API and add log fail")
-                throw errorProcess("E05") // Database connection or query error
-            }
-            println(e.message)
-            throw errorProcess("E06")
-
-        }
-    }
+//    fun APIprocess(
+//        CNA: String,
+//        args: Array<out Any?> = arrayOf(),
+//        logMsg: String,
+//        main: (args: Array<out Any?>) -> Any?
+//    ): Any? {
+//        return try {
+//            // Step 2: Check argument validity
+//            if (!checkArg(args)) {
+//                throw errorProcess("E01") // Arguments missing or invalid
+//            }
+//
+//
+//            // Step 3: Execute the main process
+//            val result = main(args)
+//
+//            // Step 4: Add log on success
+//            val logAdded = addLog(
+//                CNA, "successful: $logMsg"
+//            )
+//
+//
+//
+//            if (!logAdded) {
+//                println("API success, but add log fail")
+//                throw errorProcess("E05") // Database connection or query error
+//            }
+//
+//            // Step 5: Return the result
+//            return result
+//        } catch (e: ErrorCodeException) {
+//            throw e
+//        } catch (e: Exception) {
+//            // Generic error handler (e.g., unexpected exceptions)
+//            val logAdded = addLog(
+//                CNA, "fail: $logMsg with (${e.message})\n${
+//                    args.joinToString { arg ->
+//                        when (arg) {
+//                            is RowMapper<*> -> "RowMapper instance"
+//                            else -> arg?.toString() ?: "null:${arg!!::class.simpleName}"
+//                        }
+//                    }
+//                }")
+//
+//            if (!logAdded) {
+//                println("API and add log fail")
+//                throw errorProcess("E05") // Database connection or query error
+//            }
+//            println(e.message)
+//            throw errorProcess("E06")
+//
+//        }
+//    }
 
     fun APIprocess(
         CNA: String,
@@ -90,30 +91,36 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
                 CNA, "successful: $logMsg"
             )
 
-
-
             if (!logAdded) {
-                throw errorProcess("E05") // Database connection or query error
                 println("API success, but add log fail")
+                throw errorProcess("E05") // Database connection or query error
             }
 
             // Step 5: Return the result
-            return result
+            result
         } catch (e: ErrorCodeException) {
             throw e
-        } catch (e: Exception) {
-            // Generic error handler (e.g., unexpected exceptions)
-            val logAdded = addLog(CNA, "fail: $logMsg with (${e.message?.replace(Regex(" +"), " ")})")
-
-            if (!logAdded) {
-                throw errorProcess("E05") // Database connection or query error
-                println("API and add log fail")
-            }
+        }catch (e: DuplicateKeyException){
             println(e.message)
+            addErrorLog(CNA, logMsg, e)
+            throw errorProcess("E02") // Duplicate key error
+        } catch (e: Exception) {
+            println(e.message)
+            addErrorLog(CNA, logMsg, e)
             throw e
         }
 
 
+    }
+
+    private fun addErrorLog(CNA:String,logMsg:String,e: Exception){
+
+        val logAdded = addLog(CNA, "fail: $logMsg with (${e.message?.replace(Regex(" +"), " ")})")
+
+        if (!logAdded) {
+            println("API and add log fail")
+            throw errorProcess("E05") // Database connection or query error
+        }
     }
 
     override fun toString(): String {
