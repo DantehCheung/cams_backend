@@ -1,46 +1,60 @@
 package com.fyp.crms_backend.controller.file
 
 import com.fyp.crms_backend.FileStorageProperties
-import org.springframework.core.io.ClassPathResource
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.io.FileSystemResource
-import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.io.File
 
 
 @RestController
-@RequestMapping("/api/files/devicedoc")
+@RequestMapping("/api/files/app")
 class AppDownloadController(
-    private val fileStorageProperties: FileStorageProperties // Inject config properties
+    private val fileStorageProperties: FileStorageProperties
 ) {
     @GetMapping("/download/{OS}/{type}")
     fun downloadFile(
         @PathVariable OS: String,
         @PathVariable type: String,
-        //@RequestHeader("token") token: String
-    ): ResponseEntity<Resource> {
-        // 1. Generate dynamic filename
-        val fileName = "${OS}_${type}.zip"
+        @RequestParam(name = "auto", defaultValue = "false") autoDownload: Boolean,
+        request: HttpServletRequest
+    ): ResponseEntity<Any> {
 
-        // 2. Build full path using configured app directory
+        val fileName = "CAMS_${OS}_${type}.zip"
         val file = File("${fileStorageProperties.appdir}${File.separator}$fileName")
 
-        // 3. Check file existence
-        if (!file.exists()) {
-            return ResponseEntity.notFound().build()
-        }
+        // Detect browser requests
+        val isBrowser = request.getHeader("User-Agent")?.contains("Mozilla") ?: false
 
-        // 4. Prepare resource and headers
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$fileName\"")
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .body(FileSystemResource(file))
+        return if (isBrowser && !autoDownload) {
+            // Show download message and trigger auto-download
+            ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(
+                    """
+                    <html>
+                        <body>
+                            <script>
+                                setTimeout(function() {
+                                    window.location.href = window.location.href + "?auto=true";
+                                }, 300);
+                            </script>
+                            <h2>The file is downloading...</h2>
+                        </body>
+                    </html>
+                """.trimIndent()
+                )
+        } else {
+            // Return file if exists
+            if (!file.exists()) return ResponseEntity.notFound().build()
+
+            ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$fileName\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(FileSystemResource(file))
+        }
     }
 }
