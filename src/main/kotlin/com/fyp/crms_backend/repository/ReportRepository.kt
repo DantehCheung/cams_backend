@@ -92,7 +92,7 @@ class ReportRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
     fun getDeviceStatusReport(): List<DeviceStatusReportResponse.DeviceStatus> {
         val sql = """
             SELECT d.deviceID, d.deviceName, d.state, 
-                   CONCAT(c.campusShortName, ' ', r.roomNumber) AS location,
+                   CONCAT(c.campusShortName, ' Room ', r.roomNumber) AS location,
                    MAX(u.lastName) AS lastBorrower
             FROM Device d
             LEFT JOIN Room r ON d.roomID = r.roomID
