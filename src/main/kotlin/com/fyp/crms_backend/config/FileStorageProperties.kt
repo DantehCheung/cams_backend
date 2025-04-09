@@ -1,4 +1,4 @@
-package com.fyp.crms_backend
+package com.fyp.crms_backend.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

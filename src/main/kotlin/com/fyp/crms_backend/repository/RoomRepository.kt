@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.entity.CAMSDB
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -9,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Repository
 class RoomRepository(
-    override val jdbcTemplate: JdbcTemplate
-) : ApiRepository(jdbcTemplate) {
+    override val jdbcTemplate: JdbcTemplate, snowflake: Snowflake
+) : ApiRepository(jdbcTemplate, snowflake) {
 
     private val rowMapper = RowMapper<CAMSDB.Room> { rs, _ ->
         CAMSDB.Room(
@@ -33,8 +34,8 @@ class RoomRepository(
     }
 
 
-    fun addRoom(CNA: String, campusID: Int,roomNumber:String,roomName: String): Boolean{
-        return super.APIprocess(CNA, "add Room Data"){
+    fun addRoom(CNA: String, campusID: Int, roomNumber: String, roomName: String): Boolean {
+        return super.APIprocess(CNA, "add Room Data") {
             // Check for existing record
             val count = jdbcTemplate.queryForObject(
                 """SELECT COUNT(*) FROM room WHERE roomNumber = ? AND campusID = ?""",
@@ -42,27 +43,29 @@ class RoomRepository(
                 roomNumber,
                 campusID
             ) ?: 0
-            return@APIprocess if (count > 0){
+            return@APIprocess if (count > 0) {
                 false
-            }else {
+            } else {
                 val rows =
-                jdbcTemplate.update(
-                    """INSERT INTO room (campusID, roomNumber,roomName) VALUES (?, ?, ?)""".trimIndent(),
-                    campusID,
-                    roomNumber,
-                    roomName
-                )
-                if (rows > 0) {
-                    true
-                } else {
-                    false
-                }
+                    jdbcTemplate.update(
+                        """INSERT INTO room (campusID, roomNumber,roomName) VALUES (?, ?, ?)""".trimIndent(),
+                        campusID,
+                        roomNumber,
+                        roomName
+                    )
+                rows > 0
             }
         } as Boolean
     }
 
 
-    fun editRoom(CNA:String,campusID:Int,roomID:Int,roomNumber:String,roomName: String): Boolean {
+    fun editRoom(
+        CNA: String,
+        campusID: Int,
+        roomID: Int,
+        roomNumber: String,
+        roomName: String
+    ): Boolean {
         return super.APIprocess(CNA, "edit Room Data") {
             // Check the campus and room query together does it exist
             val count = jdbcTemplate.queryForObject(
@@ -79,12 +82,8 @@ class RoomRepository(
                     roomID,
                     campusID
                 )
-                if (rows > 0) {
-                    true
-                } else {
-                    false
-                }
-            }else{
+                rows > 0
+            } else {
                 throw RuntimeException("Room does not exist")
             }
         } as Boolean // return
@@ -93,8 +92,8 @@ class RoomRepository(
 
 
     @Transactional
-    fun deleteRoom(CNA:String, roomID: Int): Boolean {
-        return super.APIprocess(CNA,"delete room Data") {
+    fun deleteRoom(CNA: String, roomID: Int): Boolean {
+        return super.APIprocess(CNA, "delete room Data") {
             val count = jdbcTemplate.queryForObject(
                 """SELECT COUNT(*) FROM Room WHERE roomID = ?""".trimIndent(),
                 Int::class.java,
@@ -106,11 +105,7 @@ class RoomRepository(
                     """UPDATE Room SET state = 'D' WHERE roomID = ? """.trimIndent(),
                     roomID
                 )
-                if (rows > 0) {
-                    true
-                } else {
-                    false
-                }
+                rows > 0
             } else {
                 throw RuntimeException("Room does not exist")
             }
@@ -125,11 +120,7 @@ class RoomRepository(
                 roomID,
                 roomRFID
             )
-            return@APIprocess if (row > 0) {
-                true
-            } else {
-                false
-            }
+            return@APIprocess row > 0
 
         } as Boolean
     } // newRoom

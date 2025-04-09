@@ -2,24 +2,22 @@ package com.fyp.crms_backend.repository
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.exception.ErrorCodeException
-import com.fyp.crms_backend.utils.ErrorCode
 import com.fyp.crms_backend.utils.Logger
-import org.springframework.dao.DataAccessException
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.RowMapper
 
 
-abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Snowflake(1, 1)) {
-    val idGenerator = Snowflake(1, 1)
-
+abstract class ApiRepository(
+    jdbcTemplate: JdbcTemplate,
+    @Qualifier("snowflakeDatacenter2") snowflake: Snowflake
+) : Logger(jdbcTemplate, snowflake) {
 
     // Check if the arguments are valid
     private fun checkArg(args: Array<out Any?>): Boolean {
         // Example: Ensure no argument is null
         return args.all { arg -> arg != null }
     }
-
 
 
 //    fun APIprocess(
@@ -100,7 +98,7 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
             result
         } catch (e: ErrorCodeException) {
             throw e
-        }catch (e: DuplicateKeyException){
+        } catch (e: DuplicateKeyException) {
             println(e.message)
             addErrorLog(CNA, logMsg, e)
             throw errorProcess("E02") // Duplicate key error
@@ -113,7 +111,7 @@ abstract class ApiRepository(jdbcTemplate: JdbcTemplate):Logger(jdbcTemplate, Sn
 
     }
 
-    private fun addErrorLog(CNA:String,logMsg:String,e: Exception){
+    private fun addErrorLog(CNA: String, logMsg: String, e: Exception) {
 
         val logAdded = addLog(CNA, "fail: $logMsg with (${e.message?.replace(Regex(" +"), " ")})")
 

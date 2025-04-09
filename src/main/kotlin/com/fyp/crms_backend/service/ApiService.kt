@@ -2,17 +2,20 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.exception.ErrorCodeException
-import com.fyp.crms_backend.utils.ErrorCode
 import com.fyp.crms_backend.utils.JWT
 import com.fyp.crms_backend.utils.Logger
 import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
 
 
 @Service
-abstract class ApiService(val jwt: JWT, jdbcTemplate: JdbcTemplate) : Logger(jdbcTemplate, Snowflake(1, 3)) {
+abstract class ApiService(
+    val jwt: JWT, jdbcTemplate: JdbcTemplate,
+    @Qualifier("snowflakeDatacenter1") snowflake: Snowflake
+) : Logger(jdbcTemplate, snowflake) {
 
     // 允許所有人訪問
     protected fun decryptToken(token: String): Claims {
@@ -62,6 +65,7 @@ abstract class ApiService(val jwt: JWT, jdbcTemplate: JdbcTemplate) : Logger(jdb
                     addLog("${e.errorCode.name}: ${e.errorCode.description}")
                     throw e
                 }
+
                 else -> {
                     addLog("E10: Token decryption failed - ${e.message}")
                     throw errorProcess("E10")

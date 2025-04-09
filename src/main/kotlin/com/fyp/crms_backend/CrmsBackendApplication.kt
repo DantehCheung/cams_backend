@@ -1,5 +1,6 @@
 package com.fyp.crms_backend
 
+import com.fyp.crms_backend.config.FileStorageProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication

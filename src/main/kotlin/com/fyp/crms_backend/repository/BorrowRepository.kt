@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.borrow.BorrowListResponse
 import com.fyp.crms_backend.dto.borrow.CheckReturnResponse
 import com.fyp.crms_backend.dto.borrow.RemandResponse
@@ -14,10 +15,15 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 @Repository
-class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
+class BorrowRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
+    ApiRepository(jdbcTemplate, snowflake) {
     val MAX_LOAN_DAYS = 30
 
-    private fun checkBookingAvailable(itemID: Int, startDate: LocalDate, endDate: LocalDate? = null): Boolean {
+    private fun checkBookingAvailable(
+        itemID: Int,
+        startDate: LocalDate,
+        endDate: LocalDate? = null
+    ): Boolean {
         return try {
             // 1. 檢查設備基礎狀態
             val deviceState = jdbcTemplate.queryForObject(
@@ -27,7 +33,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
             ) ?: return false
 
             // 僅允許在ARLE狀態下預訂
-            if (deviceState !in listOf("A", "R","L","E")) return false
+            if (deviceState !in listOf("A", "R", "L", "E")) return false
 
             // 2. 檢查時間衝突
             val conflictCount = jdbcTemplate.queryForObject(
@@ -41,7 +47,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                 AND br.borrowDate <= ?
             )
             """,
-                arrayOf(itemID, startDate, endDate?: startDate.plusDays(14)),
+                arrayOf(itemID, startDate, endDate ?: startDate.plusDays(14)),
                 Int::class.java
             ) ?: 0
 
@@ -79,6 +85,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                     // 檢查預留人是否為當前用戶
                     reservedBy == CNA
                 }
+
                 else -> throw IllegalStateException("This device is not allow to be borrowed") // 其他狀態不允許借出
             }
         } catch (e: EmptyResultDataAccessException) {
@@ -103,7 +110,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         }
     }
 
-    private fun checkEndDate(startDate:LocalDate,endDate: LocalDate) {
+    private fun checkEndDate(startDate: LocalDate, endDate: LocalDate) {
         if (startDate > endDate) {
             throw RuntimeException("The start date should not be later than the end date")
         }
@@ -114,7 +121,12 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
     }
 
     @Transactional
-    fun reservationSQL(CNA: String, itemID: Int, borrowDate: LocalDate, endDate: LocalDate? = null): Boolean {
+    fun reservationSQL(
+        CNA: String,
+        itemID: Int,
+        borrowDate: LocalDate,
+        endDate: LocalDate? = null
+    ): Boolean {
         // 1. 插入借閱記錄
         val insertResult = jdbcTemplate.update(
             """
@@ -122,7 +134,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         (borrowDate, deviceID, borrowUserCNA, leasePeriod)
         VALUES (?, ?, ?, ?)
         """,
-            borrowDate, itemID, CNA, endDate?:borrowDate.plusDays(14)
+            borrowDate, itemID, CNA, endDate ?: borrowDate.plusDays(14)
         )
         if (borrowDate == LocalDate.now()) {
             // 2. 更新設備狀態為借出（L）
@@ -135,16 +147,21 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
         return insertResult > 0
     }
 
-    fun reservation(CNA: String, itemID: Int, borrowDate: LocalDate, endDate: LocalDate? = null): Boolean {
+    fun reservation(
+        CNA: String,
+        itemID: Int,
+        borrowDate: LocalDate,
+        endDate: LocalDate? = null
+    ): Boolean {
         return super.APIprocess(CNA, "reservation") {
             if (endDate != null) {
-                checkEndDate(borrowDate,endDate)
+                checkEndDate(borrowDate, endDate)
             }
-            if (!checkBookingAvailable(itemID, borrowDate,endDate)) {
+            if (!checkBookingAvailable(itemID, borrowDate, endDate)) {
                 return@APIprocess false
             }
 
-            return@APIprocess reservationSQL(CNA, itemID, borrowDate,endDate)
+            return@APIprocess reservationSQL(CNA, itemID, borrowDate, endDate)
         } as Boolean
 
     }
@@ -153,12 +170,12 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
     fun borrowSQL(CNA: String, itemID: Int, endDate: LocalDate? = null): Boolean {
         val result: Int
         if (endDate != null) {
-            result= jdbcTemplate.update(
+            result = jdbcTemplate.update(
                 """INSERT INTO `deviceborrowrecord` (`deviceID`, `borrowUserCNA`, `leasePeriod`) VALUES ( ?, ?, ?)""",
                 itemID, CNA, endDate
             )
-        }else {
-             result = jdbcTemplate.update(
+        } else {
+            result = jdbcTemplate.update(
                 """INSERT INTO `deviceborrowrecord` (`deviceID`, `borrowUserCNA`) VALUES ( ?, ?)""",
                 itemID, CNA
             )
@@ -175,7 +192,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
 
     fun borrow(CNA: String, itemID: Int, endDate: LocalDate? = null): Boolean {
         return super.APIprocess(CNA, "borrow") {
-            if (checkBorrowAvailable(CNA,itemID)) {
+            if (checkBorrowAvailable(CNA, itemID)) {
                 if (endDate != null) {
                     throw RuntimeException("The Device is not available for borrowing")
                 }
@@ -188,11 +205,11 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate)
                 return@APIprocess true
             }
             if (endDate != null) {
-                checkEndDate(LocalDate.now(),endDate)
+                checkEndDate(LocalDate.now(), endDate)
             }
 
 
-            return@APIprocess borrowSQL(CNA, itemID,endDate)
+            return@APIprocess borrowSQL(CNA, itemID, endDate)
         } as Boolean
     }
 

@@ -2,7 +2,17 @@ package com.fyp.crms_backend.controller.item
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.item.AddItemRequest
+import com.fyp.crms_backend.dto.item.AddRfidRequest
+import com.fyp.crms_backend.dto.item.DeleteDocRequest
+import com.fyp.crms_backend.dto.item.DeleteItemRequest
+import com.fyp.crms_backend.dto.item.DeleteRfidRequest
+import com.fyp.crms_backend.dto.item.EditItemPartRequest
+import com.fyp.crms_backend.dto.item.EditItemRequest
+import com.fyp.crms_backend.dto.item.GetItemByRFIDRequest
+import com.fyp.crms_backend.dto.item.GetItemRequest
+import com.fyp.crms_backend.dto.item.ManualInventoryRequest
+import com.fyp.crms_backend.dto.item.updateLocationByRFIDRequest
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -11,13 +21,13 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api")
-class ItemController(private val itemService: ItemService) : ApiController(){
+class ItemController(private val itemService: ItemService) : ApiController() {
 
     @PostMapping("/getitems")
     fun getItems(
         @RequestBody request: GetItemRequest
     ): Response {
-        return process(request){
+        return process(request) {
             return@process itemService.get(request)
         }
     }
@@ -27,7 +37,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     fun addItem(
         @RequestBody request: AddItemRequest
     ): Response {
-        return process(request){
+        return process(request) {
             return@process itemService.addItem(request)
         }
     }
@@ -37,7 +47,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     fun editItem(
         @RequestBody request: EditItemRequest
     ): Response {
-        return process(request){
+        return process(request) {
             return@process itemService.editItem(request)
         }
     }
@@ -46,8 +56,8 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     @PostMapping("/assignrfid")
     fun addRFID(
         @RequestBody request: AddRfidRequest
-    ) : Response {
-        return process(request){
+    ): Response {
+        return process(request) {
             return@process itemService.addRFID(request)
         }
     }
@@ -55,30 +65,29 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     @PostMapping("/deleterfid")
     fun deleteRFID(
         @RequestBody request: DeleteRfidRequest
-    ) : Response {
-        return process(request){
+    ): Response {
+        return process(request) {
             return@process itemService.deleteRFID(request)
         }
     }
 
-   // Add DeviceDoc maybe is not needed , cause have upload function
+    // Add DeviceDoc maybe is not needed , cause have upload function
 
     @PostMapping("/deletedoc")
     fun deleteDoc(
         @RequestBody request: DeleteDocRequest
-    ) : Response {
-        return process(request){
+    ): Response {
+        return process(request) {
             return@process itemService.deleteDoc(request)
         }
     }
 
 
-
     @PostMapping("/updateitempart")
     fun editItemPart(
         @RequestBody request: EditItemPartRequest
-    ) : Response {
-        return process(request){
+    ): Response {
+        return process(request) {
             return@process itemService.editItemPart(request)
         }
     }
@@ -87,7 +96,7 @@ class ItemController(private val itemService: ItemService) : ApiController(){
     fun deleteItem(
         @RequestBody request: DeleteItemRequest
     ): Response {
-        return process(request){
+        return process(request) {
             return@process itemService.deleteItem(request) // cant merge with edit method, different parameters
         }
     }
@@ -120,7 +129,6 @@ class ItemController(private val itemService: ItemService) : ApiController(){
             return@process itemService.getItemByRFID(request)
         }
     }
-
 
 
 }

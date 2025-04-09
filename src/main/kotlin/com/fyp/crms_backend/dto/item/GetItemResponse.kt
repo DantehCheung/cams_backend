@@ -7,7 +7,7 @@ import java.time.LocalDate
 data class GetItemResponse(
 
     val device: List<Devices>
-):Response{
+) : Response {
     data class Devices(
         val deviceID: Int? = 0,
         val deviceName: String? = null,

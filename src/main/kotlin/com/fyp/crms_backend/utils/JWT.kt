@@ -5,7 +5,7 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.Date
 
 @Component
 class JWT(private val sKey: SKey) {

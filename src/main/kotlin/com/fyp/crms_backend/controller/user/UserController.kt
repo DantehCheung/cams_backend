@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RestController
 class UserController(private val userService: UserService) : ApiController() {
 
     @PostMapping("/loginbypw")
-    fun loginByPw(@RequestBody request: LoginByPwRequest, httpRequest: HttpServletRequest): Response {
+    fun loginByPw(
+        @RequestBody request: LoginByPwRequest,
+        httpRequest: HttpServletRequest
+    ): Response {
         val ipAddress = httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr
         return process(request) {
             return@process userService.login(request, ipAddress)
@@ -28,7 +31,10 @@ class UserController(private val userService: UserService) : ApiController() {
     }
 
     @PostMapping("/loginbycard")
-    fun loginByCard(@RequestBody request: LoginByCardRequest, httpRequest: HttpServletRequest): Response {
+    fun loginByCard(
+        @RequestBody request: LoginByCardRequest,
+        httpRequest: HttpServletRequest
+    ): Response {
         val ipAddress = httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr
         return process(request) {
             return@process userService.login(request, ipAddress)
@@ -36,7 +42,10 @@ class UserController(private val userService: UserService) : ApiController() {
     }
 
     @PostMapping("/renewtoken")
-    fun renewToken(@RequestBody request: RenewTokenRequest, httpRequest: HttpServletRequest): Response {
+    fun renewToken(
+        @RequestBody request: RenewTokenRequest,
+        httpRequest: HttpServletRequest
+    ): Response {
         val ipAddress = httpRequest.getHeader("X-Forwarded-For") ?: httpRequest.remoteAddr
         return process(request) {
             return@process userService.renew(request, ipAddress)
@@ -53,7 +62,7 @@ class UserController(private val userService: UserService) : ApiController() {
     // ADD USER
     @PostMapping("/adduser")
     fun adduser(@RequestBody request: AddUserRequest): Response {
-        return process(request){
+        return process(request) {
             return@process userService.addUser(request)
         }
     }

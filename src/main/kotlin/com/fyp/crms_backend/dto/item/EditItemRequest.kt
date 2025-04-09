@@ -6,7 +6,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 
-data class EditItemRequest (
+data class EditItemRequest(
     val token: String,
     val deviceID: Int,
     val deviceName: String,

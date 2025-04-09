@@ -30,6 +30,7 @@ class RoomRfidController(private val roomRFIDService: RoomRfidService) : ApiCont
     fun deleteRoomRFID(@RequestBody request: DeleteRoomRFIDRequest): Response {
         return process(request) { roomRFIDService.delete(request) }
     }
+
     @PostMapping("/getroombyrfid")
     fun getRoomByRFID(@RequestBody request: GetRoomByRFIDRequest): Response {
         return process(request) { roomRFIDService.getRoomByRFID(request) }

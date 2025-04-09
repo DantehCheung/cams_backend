@@ -6,6 +6,6 @@ data class AddCampusResponse(
     val campusName: String? = null,
     val campusShortName: String? = null,
     val resultState: String? = null
-    ) : Response
+) : Response
 
 

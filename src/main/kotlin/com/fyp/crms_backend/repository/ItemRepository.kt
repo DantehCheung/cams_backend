@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.item.AddItemRequest
 import com.fyp.crms_backend.dto.item.AddItemRequest.DevicePart
 import com.fyp.crms_backend.dto.item.GetItemByRFIDResponse
@@ -12,7 +13,8 @@ import java.time.LocalDate
 
 
 @Repository
-class ItemRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
+class ItemRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
+    ApiRepository(jdbcTemplate, snowflake) {
 
 
     fun fetchData(CNA: String, roomID: Int, stateList: List<String>? = null): GetItemResponse {
@@ -33,87 +35,89 @@ WHERE roomID = ?
             }.toTypedArray() // Convert to array
 
             // Fetch devices
-            val devices: List<GetItemResponse.Devices> = jdbcTemplate.query(sqlDevices, parameters) { rs, _ ->
-                GetItemResponse.Devices(
-                    deviceID = rs.getInt("deviceID"),
-                    deviceName = rs.getString("deviceName"),
-                    price = rs.getBigDecimal("price"),
-                    orderDate = rs.getDate("orderDate")?.toLocalDate(),
-                    arriveDate = rs.getDate("arriveDate")?.toLocalDate(),
-                    maintenanceDate = rs.getDate("maintenanceDate")?.toLocalDate(),
-                    roomID = rs.getInt("roomID"),
-                    state = rs.getString("state")?.firstOrNull(), // Get the first character of the ENUM
-                    remark = rs.getString("remark"),
-                    docs = fetchDeviceDocs(rs.getInt("deviceID")),
-                    partID = fetchDeviceParts(rs.getInt("deviceID")),
-                    deviceRFID = fetchDeviceRFIDs(rs.getInt("deviceID"))
-                )
-            }
+            val devices: List<GetItemResponse.Devices> =
+                jdbcTemplate.query(sqlDevices, parameters) { rs, _ ->
+                    GetItemResponse.Devices(
+                        deviceID = rs.getInt("deviceID"),
+                        deviceName = rs.getString("deviceName"),
+                        price = rs.getBigDecimal("price"),
+                        orderDate = rs.getDate("orderDate")?.toLocalDate(),
+                        arriveDate = rs.getDate("arriveDate")?.toLocalDate(),
+                        maintenanceDate = rs.getDate("maintenanceDate")?.toLocalDate(),
+                        roomID = rs.getInt("roomID"),
+                        state = rs.getString("state")
+                            ?.firstOrNull(), // Get the first character of the ENUM
+                        remark = rs.getString("remark"),
+                        docs = fetchDeviceDocs(rs.getInt("deviceID")),
+                        partID = fetchDeviceParts(rs.getInt("deviceID")),
+                        deviceRFID = fetchDeviceRFIDs(rs.getInt("deviceID"))
+                    )
+                }
 
             return@APIprocess GetItemResponse(device = devices)
         } as GetItemResponse
     }
 
     fun fetchDeviceDocs(deviceID: Int): List<GetItemResponse.DeviceDoc> {
-            val sql = """
+        val sql = """
                 SELECT *
                 FROM DeviceDoc
                 WHERE deviceID = ? and state = 'A'
             """
         return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
-                GetItemResponse.DeviceDoc(
-                    deviceID = rs.getInt("deviceID"),
-                    docPath = rs.getString("docPath")
-                )
-            }
+            GetItemResponse.DeviceDoc(
+                deviceID = rs.getInt("deviceID"),
+                docPath = rs.getString("docPath")
+            )
+        }
     }
 
     fun fetchDeviceParts(deviceID: Int): List<GetItemResponse.DevicePartID> {
-            val sql = """
+        val sql = """
                 SELECT *
                 FROM DevicePart
                 WHERE deviceID = ? and state = 'A'
             """
         return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
-                GetItemResponse.DevicePartID(
-                    deviceID = rs.getInt("deviceID"),
-                    devicePartID = rs.getInt("devicePartID"),
-                    devicePartName = rs.getString("devicePartName")
-                )
-            }
+            GetItemResponse.DevicePartID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                devicePartName = rs.getString("devicePartName")
+            )
+        }
     }
 
     fun fetchDeviceRFIDs(deviceID: Int): List<GetItemResponse.DeviceRFID> {
-            val sql = """
+        val sql = """
                 SELECT *
                 FROM DeviceRFID
                 WHERE deviceID = ? and state = 'A'
             """
         return jdbcTemplate.query(sql, arrayOf(deviceID)) { rs, _ ->
-                GetItemResponse.DeviceRFID(
-                    deviceID = rs.getInt("deviceID"),
-                    devicePartID = rs.getInt("devicePartID"),
-                    RFID = rs.getString("RFID")
-                )
-            }
+            GetItemResponse.DeviceRFID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                RFID = rs.getString("RFID")
+            )
+        }
     }
 
     private fun fetchDeviceDocs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceDoc>> {
 
         return jdbcTemplate.query(
-                """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()} ) and state = 'A'"""
-            ) { rs, _ ->
-                GetItemResponse.DeviceDoc(
-                    deviceID = rs.getInt("deviceID"),
-                    docPath = rs.getString("docPath")
-                )
-            }.groupBy { it.deviceID }
+            """SELECT deviceID, docPath FROM deviceDoc WHERE deviceID IN (${deviceIDs.joinToString()} ) and state = 'A'"""
+        ) { rs, _ ->
+            GetItemResponse.DeviceDoc(
+                deviceID = rs.getInt("deviceID"),
+                docPath = rs.getString("docPath")
+            )
+        }.groupBy { it.deviceID }
     }
 
     private fun fetchDeviceParts(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DevicePartID>> {
 
         return jdbcTemplate.query(
-                """
+            """
                     SELECT
                         deviceID,
                         devicePartID,
@@ -121,18 +125,18 @@ WHERE roomID = ?
                     FROM devicePartID
                     WHERE deviceID IN (${deviceIDs.joinToString()}) and state = 'A'
                 """
-            ) { rs, _ ->
-                GetItemResponse.DevicePartID(
-                    deviceID = rs.getInt("deviceID"),
-                    devicePartID = rs.getInt("devicePartID"),
-                    devicePartName = rs.getString("devicePartName")
-                )
-            }.groupBy { it.deviceID }
+        ) { rs, _ ->
+            GetItemResponse.DevicePartID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                devicePartName = rs.getString("devicePartName")
+            )
+        }.groupBy { it.deviceID }
     }
 
     private fun fetchDeviceRFIDs(deviceIDs: List<Int>): Map<Int?, List<GetItemResponse.DeviceRFID>> {
         return jdbcTemplate.query(
-                """
+            """
                     SELECT
                         deviceID,
                         devicePartID,
@@ -140,13 +144,13 @@ WHERE roomID = ?
                     FROM deviceRFID
                     WHERE deviceID IN (${deviceIDs.joinToString()}) and state = 'A'
                 """
-            ) { rs, _ ->
-                GetItemResponse.DeviceRFID(
-                    deviceID = rs.getInt("deviceID"),
-                    devicePartID = rs.getInt("devicePartID"),
-                    RFID = rs.getString("RFID")
-                )
-            }.groupBy { it.deviceID }
+        ) { rs, _ ->
+            GetItemResponse.DeviceRFID(
+                deviceID = rs.getInt("deviceID"),
+                devicePartID = rs.getInt("devicePartID"),
+                RFID = rs.getString("RFID")
+            )
+        }.groupBy { it.deviceID }
 
     }
 
@@ -155,7 +159,11 @@ WHERE roomID = ?
 // 1. For each device, insert into 'device' and retrieve the new ID.
 // 2. Then insert docs and parts (and RFIDs) referencing that new ID.
     @Transactional
-    fun addItem(CNA: String, device: AddItemRequest.Device,parts:List<AddItemRequest.DevicePart>): Int {
+    fun addItem(
+        CNA: String,
+        device: AddItemRequest.Device,
+        parts: List<DevicePart>
+    ): Int {
         return super.APIprocess(CNA, "add Device Data") {
             val deviceID = addSingleDevice(device)
             addParts(deviceID, parts)
@@ -288,8 +296,16 @@ WHERE roomID = ?
 
     // Edit device (big)
     fun editItem(
-        CNA: String, deviceID: Int, deviceName: String, price: BigDecimal, orderDate: LocalDate, arriveDate: LocalDate,
-        maintenanceDate: LocalDate, roomID: Int, state: Char, remark: String
+        CNA: String,
+        deviceID: Int,
+        deviceName: String,
+        price: BigDecimal,
+        orderDate: LocalDate,
+        arriveDate: LocalDate,
+        maintenanceDate: LocalDate,
+        roomID: Int,
+        state: Char,
+        remark: String
     ): Boolean {
 
         return super.APIprocess(CNA, "editData") {
@@ -318,7 +334,15 @@ WHERE roomID = ?
                 """UPDATE Device SET deviceName = ?, price = ?, orderDate = ?,
             | arriveDate = ?, maintenanceDate = ?, roomID = ?, state = ?, remark = ? 
             | WHERE deviceID = ?""".trimMargin(),
-                deviceName, price, orderDate, arriveDate, maintenanceDate, roomID, state.toString(), remark, deviceID
+                deviceName,
+                price,
+                orderDate,
+                arriveDate,
+                maintenanceDate,
+                roomID,
+                state.toString(),
+                remark,
+                deviceID
             )
 
             if (rowUpdate == 0) {
@@ -364,18 +388,14 @@ WHERE roomID = ?
 
               }*/
 
-            return@APIprocess if (rowUpdate > 0 ) {
-                true
-            } else {
-                false
-            }
+            return@APIprocess rowUpdate > 0
         } as Boolean
     } // end
 
 
     // ADD/ASSIGN RFID
-    fun addSingleRFID(CNA:String,RFID: String,deviceID: Int,partId: Int): Boolean{
-        return super.APIprocess(CNA,"assign a RFID"){
+    fun addSingleRFID(CNA: String, RFID: String, deviceID: Int, partId: Int): Boolean {
+        return super.APIprocess(CNA, "assign a RFID") {
 
             val rfidcount = jdbcTemplate.queryForObject(
                 """SELECT COUNT(1) FROM DeviceRFID WHERE deviceID = ? AND RFID = ?""",
@@ -390,14 +410,10 @@ WHERE roomID = ?
 
             val rowUpdate = jdbcTemplate.update(
                 """INSERT INTO DeviceRFID (deviceID, devicePartID, RFID) VALUES (?, ?, ?) """,
-               deviceID,partId,RFID
+                deviceID, partId, RFID
             )
 
-            return@APIprocess  if (rowUpdate > 0) {
-                true
-            } else {
-                false
-            }
+            return@APIprocess rowUpdate > 0
 
 
         } as Boolean
@@ -405,7 +421,7 @@ WHERE roomID = ?
 
 
     // DELETE RFID
-    fun deleteSingleRFID(CNA:String, RFID: String, deviceID: Int, partId: Int): Boolean {
+    fun deleteSingleRFID(CNA: String, RFID: String, deviceID: Int, partId: Int): Boolean {
         return super.APIprocess(CNA, "delete a RFID") {
             val rfidcount = jdbcTemplate.queryForObject(
                 """SELECT COUNT(1) FROM DeviceRFID WHERE devicePartID = ? AND RFID = ?""",
@@ -423,17 +439,13 @@ WHERE roomID = ?
                 partId, RFID
             )
 
-            return@APIprocess if (rowUpdate > 0) {
-                true
-            } else {
-                false
-            }
+            return@APIprocess rowUpdate > 0
         } as Boolean
     }
 
 
     // DELETE DEVICE DOC
-    fun deleteSingleDoc(CNA:String, deviceID: Int, partId: Int, docPath: String): Boolean {
+    fun deleteSingleDoc(CNA: String, deviceID: Int, partId: Int, docPath: String): Boolean {
         return super.APIprocess(CNA, "delete a doc") {
             val doccount = jdbcTemplate.queryForObject(
                 """SELECT COUNT(1) FROM DeviceDoc WHERE deviceID = ? AND docPath = ?""",
@@ -451,15 +463,17 @@ WHERE roomID = ?
                 deviceID, docPath
             )
 
-            return@APIprocess if (rowUpdate > 0) {
-                true
-            } else {
-                false
-            }
+            return@APIprocess rowUpdate > 0
         } as Boolean
     }
 
-    fun editItemPart(CNA:String, deviceID: Int, partID: Int, partName: String, state: Char): Boolean {
+    fun editItemPart(
+        CNA: String,
+        deviceID: Int,
+        partID: Int,
+        partName: String,
+        state: Char
+    ): Boolean {
         return super.APIprocess(CNA, "editData") {
             // Verify that the device exists and is not already marked as deleted.
             val devicecount = jdbcTemplate.queryForObject(
@@ -478,15 +492,9 @@ WHERE roomID = ?
                 partName, state.toString(), deviceID, partID
             )
 
-            return@APIprocess if (rowUpdate > 0) {
-                true
-            } else {
-                false
-            }
+            return@APIprocess rowUpdate > 0
         } as Boolean
     }
-
-
 
 
     //Manual Adjust Item
@@ -520,7 +528,6 @@ WHERE roomID = ?
             )
         }
     } // end
-
 
 
     @Transactional

@@ -2,7 +2,11 @@ package com.fyp.crms_backend.controller.borrow
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.borrow.*
+import com.fyp.crms_backend.dto.borrow.BorrowListRequest
+import com.fyp.crms_backend.dto.borrow.BorrowRequest
+import com.fyp.crms_backend.dto.borrow.CheckReturnRequest
+import com.fyp.crms_backend.dto.borrow.RemandRequest
+import com.fyp.crms_backend.dto.borrow.ReservationRequest
 import com.fyp.crms_backend.service.BorrowService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -11,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/br")
-public class BorrowController(private val borrowService: BorrowService) : ApiController() {
+class BorrowController(private val borrowService: BorrowService) : ApiController() {
     @PostMapping("/reservation")
     fun reservation(
         @RequestBody request: ReservationRequest
@@ -38,9 +42,10 @@ public class BorrowController(private val borrowService: BorrowService) : ApiCon
             return@process borrowService.remand(request)
         }
     }
+
     @PostMapping("/getborrowrecord")
     fun getborrowRecord(@RequestBody request: BorrowListRequest): Response {
-        return process(request){
+        return process(request) {
             return@process borrowService.getBorrowList(request)
         }
     }
@@ -48,7 +53,7 @@ public class BorrowController(private val borrowService: BorrowService) : ApiCon
 
     @PostMapping("/check")
     fun check(@RequestBody request: CheckReturnRequest): Response {
-        return process(request){
+        return process(request) {
             return@process borrowService.checkReturn(request)
         }
     }

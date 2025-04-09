@@ -4,7 +4,7 @@ import com.fyp.crms_backend.dto.Response
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-data class BorrowListResponse(val borrowRecord:List<BorrowRecord>):Response{
+data class BorrowListResponse(val borrowRecord: List<BorrowRecord>) : Response {
     data class BorrowRecord(
         val borrowRecordID: Int,
         val borrowDate: LocalDate,

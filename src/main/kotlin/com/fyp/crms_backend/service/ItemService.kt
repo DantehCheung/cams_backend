@@ -1,7 +1,23 @@
 package com.fyp.crms_backend.service
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.item.*
+import com.fyp.crms_backend.dto.item.AddItemRequest
+import com.fyp.crms_backend.dto.item.AddRfidRequest
+import com.fyp.crms_backend.dto.item.DeleteDocRequest
+import com.fyp.crms_backend.dto.item.DeleteItemRequest
+import com.fyp.crms_backend.dto.item.DeleteRfidRequest
+import com.fyp.crms_backend.dto.item.DeviceIdResponse
+import com.fyp.crms_backend.dto.item.EditItemPartRequest
+import com.fyp.crms_backend.dto.item.EditItemRequest
+import com.fyp.crms_backend.dto.item.GetItemByRFIDRequest
+import com.fyp.crms_backend.dto.item.GetItemByRFIDResponse
+import com.fyp.crms_backend.dto.item.GetItemRequest
+import com.fyp.crms_backend.dto.item.GetItemResponse
+import com.fyp.crms_backend.dto.item.ManualInventoryRequest
+import com.fyp.crms_backend.dto.item.ManualInventoryResponse
+import com.fyp.crms_backend.dto.item.updateLocationByRFIDRequest
+import com.fyp.crms_backend.dto.item.updateLocationByRFIDResponse
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -10,7 +26,10 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
+class ItemService(
+    private val itemRepository: ItemRepository, jwt: JWT, jdbcTemplate: JdbcTemplate,
+    snowflake: Snowflake
+) : ApiService(jwt, jdbcTemplate, snowflake) {
 
 
     fun get(request: GetItemRequest): GetItemResponse {
@@ -30,7 +49,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
 
         val data: Claims = decryptToken(request.token)
 
-        val deviceID = itemRepository.addItem(data.subject,request.device,request.deviceParts);
+        val deviceID = itemRepository.addItem(data.subject, request.device, request.deviceParts)
 
         return DeviceIdResponse(
             deviceID
@@ -43,7 +62,7 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
 
         val data: Claims = decryptToken(request.token)
 
-        val result: Boolean = itemRepository.deleteItem(data.subject,request.deviceID);
+        val result: Boolean = itemRepository.deleteItem(data.subject, request.deviceID)
 
         return StateResponse(
             result
@@ -53,26 +72,34 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
     // Edit Item
 
     fun editItem(request: EditItemRequest): StateResponse {
-            // The token in EditItemRequest is used as CNA.
+        // The token in EditItemRequest is used as CNA.
         val data: Claims = decryptToken(request.token)
 
         val repo: Boolean = itemRepository.editItem(
-            data.subject, request.deviceID, request.deviceName,
-            request.price, request.orderDate, request.arriveDate, request.maintenanceDate, request.roomID,
-            request.state, request.remark
+            data.subject,
+            request.deviceID,
+            request.deviceName,
+            request.price,
+            request.orderDate,
+            request.arriveDate,
+            request.maintenanceDate,
+            request.roomID,
+            request.state,
+            request.remark
         )
 
         return StateResponse(
             repo
         )
-        }
+    }
 
     // Add RFID
     fun addRFID(request: AddRfidRequest): StateResponse {
         val data: Claims = decryptToken(request.token)
 
         val repo: Boolean = itemRepository.addSingleRFID(
-            data.subject,request.RFID,request.deviceID,request.partID)
+            data.subject, request.RFID, request.deviceID, request.partID
+        )
 
         return StateResponse(
             repo
@@ -84,7 +111,8 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
         val data: Claims = decryptToken(request.token)
 
         val repo: Boolean = itemRepository.deleteSingleRFID(
-            data.subject,request.RFID,request.deviceID,request.partID)
+            data.subject, request.RFID, request.deviceID, request.partID
+        )
 
         return StateResponse(
             repo
@@ -96,7 +124,8 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
         val data: Claims = decryptToken(request.token)
 
         val repo: Boolean = itemRepository.deleteSingleDoc(
-            data.subject,request.deviceID,request.partID,request.docPath)
+            data.subject, request.deviceID, request.partID, request.docPath
+        )
 
         return StateResponse(
             repo
@@ -104,12 +133,12 @@ class ItemService(private val itemRepository: ItemRepository, jwt: JWT, jdbcTemp
     }
 
     // Edit Item Part
-    fun editItemPart(request: EditItemPartRequest): StateResponse{
+    fun editItemPart(request: EditItemPartRequest): StateResponse {
 
         val data: Claims = decryptToken(request.token)
 
         val repo: Boolean = itemRepository.editItemPart(
-            data.subject,request.deviceID,request.partID,request.partName,request.state
+            data.subject, request.deviceID, request.partID, request.partName, request.state
         )
 
         return StateResponse(

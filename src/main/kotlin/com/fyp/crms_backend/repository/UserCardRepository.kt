@@ -1,10 +1,12 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
 
 @Repository
-class UserCardRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
+class UserCardRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
+    ApiRepository(jdbcTemplate, snowflake) {
 
     fun add(CNA: String, CardID: String, userCNA: String): Boolean {
         return APIprocess(CNA, "Add User Card") {

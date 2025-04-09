@@ -37,7 +37,7 @@ class CampusController(private val campusService: CampusService) : ApiController
 
     @PostMapping("/editcampus")
     fun EditCampus(
-        @RequestBody request : EditCampusRequest
+        @RequestBody request: EditCampusRequest
     ): Response {
         return process(request) {
             return@process campusService.edit(request)
@@ -47,7 +47,7 @@ class CampusController(private val campusService: CampusService) : ApiController
     @PostMapping("/deletecampus")
     fun DeleteCampuus(
         @RequestBody request: DeleteCampusRequest
-    ) : Response{
+    ): Response {
         return process(request) {
             return@process campusService.delete(request)
         }

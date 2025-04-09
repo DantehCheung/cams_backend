@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.service
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.StateResponse
 import com.fyp.crms_backend.dto.room.GetRoomResponse
 import com.fyp.crms_backend.dto.roomRfid.AddRoomRFIDRequest
@@ -15,8 +16,9 @@ import org.springframework.stereotype.Service
 @Service
 class RoomRfidService(
     private val roomRFIDRepository: RoomRFIDRepository,
-    jwt: JWT, jdbcTemplate: JdbcTemplate
-) : ApiService(jwt, jdbcTemplate) {
+    jwt: JWT, jdbcTemplate: JdbcTemplate,
+    snowflake: Snowflake
+) : ApiService(jwt, jdbcTemplate, snowflake) {
 
     fun add(request: AddRoomRFIDRequest): StateResponse {
         val data: Claims = decryptToken(request.token)

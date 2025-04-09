@@ -2,6 +2,7 @@ package com.fyp.crms_backend.task
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.utils.Logger
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
@@ -13,8 +14,9 @@ import java.time.LocalDate
 @Component
 class ScheduledTasks(
     jdbcTemplate: JdbcTemplate,
-    private val mailSender: JavaMailSender
-):Logger(jdbcTemplate, Snowflake(1, 2)) {
+    private val mailSender: JavaMailSender,
+    @Qualifier("snowflakeDatacenter0") snowflake: Snowflake
+) : Logger(jdbcTemplate, snowflake) {
 
 
     data class OverdueRecord(
@@ -99,7 +101,13 @@ CAMS System
                 text = emailText
             }.also {
                 mailSender.send(it)
-                addLog("Email sent to ${record.email} regarding overdue devices: ${record.deviceIDs.joinToString(",")}")
+                addLog(
+                    "Email sent to ${record.email} regarding overdue devices: ${
+                        record.deviceIDs.joinToString(
+                            ","
+                        )
+                    }"
+                )
             }
         } catch (ex: Exception) {
             println("Failed to send email to ${record.email}:\n$ex")
@@ -109,7 +117,8 @@ CAMS System
     @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Hong_Kong")
     @Transactional
     fun updateReservationStatus() {
-        jdbcTemplate.update("""
+        jdbcTemplate.update(
+            """
             UPDATE Device d
             JOIN DeviceBorrowRecord br ON d.deviceID = br.deviceID
             SET d.state = 'R'
@@ -119,7 +128,8 @@ CAMS System
                 SELECT 1 FROM DeviceReturnRecord 
                 WHERE borrowRecordID = br.borrowRecordID
               )
-        """)
+        """
+        )
         addLog("Updated status for devices")
     }
 

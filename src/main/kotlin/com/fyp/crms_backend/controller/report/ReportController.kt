@@ -1,27 +1,45 @@
+// ReportController.kt
 package com.fyp.crms_backend.controller.report
 
-import com.fyp.crms_backend.dto.room.AddRoomRequest
-import com.fyp.crms_backend.dto.room.EditRoomRequest
-import com.fyp.crms_backend.dto.room.GetRoomRequest
-import com.fyp.crms_backend.service.RoomService
+import com.fyp.crms_backend.controller.ApiController
+import com.fyp.crms_backend.dto.Response
+import com.fyp.crms_backend.dto.report.DeviceBorrowHistoryRequest
+import com.fyp.crms_backend.dto.report.DeviceStatusReportRequest
+import com.fyp.crms_backend.dto.report.OverdueDevicesRequest
+import com.fyp.crms_backend.service.ReportService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import com.fyp.crms_backend.controller.ApiController
-import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.room.DeleteRoomRequest
-import com.fyp.crms_backend.service.ReportService
 
 @RestController
 @RequestMapping("/api")
-class ReportController(private val service: ReportService) :ApiController(){
+class ReportController(private val service: ReportService) : ApiController() {
 
-//    過期冇還嘢
-//    show entity record （room, user）
+    @PostMapping("/device-borrow-history")
+    fun getDeviceBorrowHistory(
+        @RequestBody request: DeviceBorrowHistoryRequest
+    ): Response {
+        return process(request) {
+            return@process service.getDeviceBorrowHistory(request)
+        }
+    }
 
-//    針對某學生嘅借野record
+    @PostMapping("/overdue-devices")
+    fun getOverdueDevices(
+        @RequestBody request: OverdueDevicesRequest
+    ): Response {
+        return process(request) {
+            return@process service.getOverdueDevices(request)
+        }
+    }
 
-
-
+    @PostMapping("/device-status-report")
+    fun getDeviceStatusReport(
+        @RequestBody request: DeviceStatusReportRequest
+    ): Response {
+        return process(request) {
+            return@process service.getDeviceStatusReport(request)
+        }
+    }
 }

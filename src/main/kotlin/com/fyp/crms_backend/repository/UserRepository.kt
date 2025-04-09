@@ -1,5 +1,6 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.utils.AccessPagePermission.Companion.defaultAccessPage
@@ -11,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 
 
 @Repository
-class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
+class UserRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
+    ApiRepository(jdbcTemplate, snowflake) {
     private val rowMapper = RowMapper<CAMSDB.User> { rs, _ ->
         CAMSDB.User(
             CNA = rs.getString("CNA"),
@@ -80,7 +82,7 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
                     throw errorProcess("E07") // User not found
                 } else {
                     // Increment loginFail and block if >=10 attempts
-                    val updateQuery = if (fuser.loginFail!! >= 10) {
+                    val updateQuery = if (fuser.loginFail >= 10) {
                         "UPDATE user SET lastLoginIP = ?, loginFail = loginFail + 1, password = CONCAT('!', SUBSTRING(password, 2)) WHERE CNA = ?"
                     } else {
                         "UPDATE user SET lastLoginIP = ?, loginFail = loginFail + 1 WHERE CNA = ?"
@@ -258,7 +260,6 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
     }
 
 
-
     private fun addUser(
         cnaToInsert: String,
         emailDomain: String?,
@@ -282,7 +283,7 @@ class UserRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
         } else {
 
             val salt = getRandomString(5)
-            if (accessPage == null){
+            if (accessPage == null) {
                 // If accessPage is null, set it to the default value based on accessLevel
                 val defaultAccessPage = defaultAccessPage(accessLevel)
                 performInsert(

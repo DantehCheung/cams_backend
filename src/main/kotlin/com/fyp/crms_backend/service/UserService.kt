@@ -1,8 +1,14 @@
 package com.fyp.crms_backend.service
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.Request
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.login.*
+import com.fyp.crms_backend.dto.login.ChangePwRequest
+import com.fyp.crms_backend.dto.login.LoginByCardRequest
+import com.fyp.crms_backend.dto.login.LoginByPwRequest
+import com.fyp.crms_backend.dto.login.LoginResponse
+import com.fyp.crms_backend.dto.login.RenewTokenRequest
+import com.fyp.crms_backend.dto.login.RenewTokenResponse
 import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.repository.UserRepository
@@ -13,7 +19,10 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemplate: JdbcTemplate) : ApiService(jwt,jdbcTemplate) {
+class UserService(
+    private val userRepository: UserRepository, jwt: JWT, jdbcTemplate: JdbcTemplate,
+    snowflake: Snowflake
+) : ApiService(jwt, jdbcTemplate, snowflake) {
 
 
     fun login(request: Request, ipAddress: String): LoginResponse {
@@ -27,7 +36,12 @@ class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemp
             } else {
                 Pair(request.CNA, null)
             }
-            user = userRepository.findByCNAAndPassword(cnaPart, domainPart, request.password, ipAddress)
+            user = userRepository.findByCNAAndPassword(
+                cnaPart,
+                domainPart,
+                request.password,
+                ipAddress
+            )
                 ?: throw IllegalArgumentException("Invalid CNA or password")
         } else if (request is LoginByCardRequest) {
             user = userRepository.findByCard(request.CardID, ipAddress)
@@ -43,10 +57,10 @@ class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemp
         return LoginResponse(
             token = token,
             refreshToken = refreshToken,
-            accessLevel = user.accessLevel!!,
-            accessPage = user.accessPage!!,
-            firstName = user.firstName!!,
-            lastName = user.lastName!!,
+            accessLevel = user.accessLevel,
+            accessPage = user.accessPage,
+            firstName = user.firstName,
+            lastName = user.lastName,
             lastLoginIp = user.lastLoginIP ?: "",
             lastLoginTime = user.lastLoginTime!!,
         )
@@ -57,7 +71,8 @@ class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemp
     fun renew(request: RenewTokenRequest, ipAddress: String): RenewTokenResponse {
 
         val data: Claims = decryptToken(request.refreshToken)
-        val user: CAMSDB.User = userRepository.renewToken(data.subject, data["salt"].toString(), ipAddress)!!
+        val user: CAMSDB.User =
+            userRepository.renewToken(data.subject, data["salt"].toString(), ipAddress)!!
         val token = jwt.generateToken(user)
 
         return RenewTokenResponse(token)
@@ -66,7 +81,8 @@ class UserService(private val userRepository: UserRepository, jwt: JWT, jdbcTemp
 
     fun changePw(request: ChangePwRequest): StateResponse {
         val data: Claims = decryptToken(request.token)
-        val status: Boolean = userRepository.changePw(data.subject, request.oldPassword, request.newPassword)
+        val status: Boolean =
+            userRepository.changePw(data.subject, request.oldPassword, request.newPassword)
 
         return StateResponse(status = status)
 

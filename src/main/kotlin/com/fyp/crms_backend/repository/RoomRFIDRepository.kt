@@ -1,14 +1,15 @@
 package com.fyp.crms_backend.repository
 
+import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.room.GetRoomResponse
 import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.queryForObject
 import org.springframework.stereotype.Repository
 
 
 @Repository
-class RoomRFIDRepository(jdbcTemplate: JdbcTemplate) : ApiRepository(jdbcTemplate) {
+class RoomRFIDRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
+    ApiRepository(jdbcTemplate, snowflake) {
 
     fun add(CNA: String, roomID: Int, RFID: String): Boolean {
         return APIprocess(CNA, "Add Room RFID") {
