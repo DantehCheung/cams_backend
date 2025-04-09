@@ -3,6 +3,7 @@ package com.fyp.crms_backend.config
 import com.fyp.crms_backend.algorithm.Snowflake
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 
 @Configuration
 class SnowflakeConfig {
@@ -14,6 +15,7 @@ class SnowflakeConfig {
 
 
     @Bean(name = ["snowflakeDatacenter0"])
+    @Primary
     fun snowflakeDatacenter0(): Snowflake {
         return Snowflake(1, workerId0.toLong())
     }

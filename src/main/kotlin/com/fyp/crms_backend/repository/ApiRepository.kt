@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 
 abstract class ApiRepository(
     jdbcTemplate: JdbcTemplate,
-    @Qualifier("snowflakeDatacenter2") snowflake: Snowflake
+    @Qualifier("snowflakeDatacenter3") snowflake: Snowflake
 ) : Logger(jdbcTemplate, snowflake) {
 
     // Check if the arguments are valid

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 abstract class ApiService(
     val jwt: JWT, jdbcTemplate: JdbcTemplate,
-    @Qualifier("snowflakeDatacenter1") snowflake: Snowflake
+    @Qualifier("snowflakeDatacenter2") snowflake: Snowflake
 ) : Logger(jdbcTemplate, snowflake) {
 
     // 允許所有人訪問

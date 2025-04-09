@@ -15,7 +15,7 @@ import java.time.LocalDate
 class ScheduledTasks(
     jdbcTemplate: JdbcTemplate,
     private val mailSender: JavaMailSender,
-    @Qualifier("snowflakeDatacenter0") snowflake: Snowflake
+    @Qualifier("snowflakeDatacenter1") snowflake: Snowflake
 ) : Logger(jdbcTemplate, snowflake) {
 
 
