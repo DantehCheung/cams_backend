@@ -62,10 +62,11 @@ class BorrowService(
 
     fun getBorrowList(request: BorrowListRequest): Response {
         val data: Claims = decryptToken(request.token)
+        val targetCNA = if (request.targetCNA.isNullOrBlank()) data.subject else request.targetCNA
         val results: List<BorrowListResponse.BorrowRecord> =
             borrowRepository.getBorrowList(
                 data.subject,
-                request.targetCNA,
+                targetCNA,
                 request.borrowDateAfter,
                 request.returned
             )
