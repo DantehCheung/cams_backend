@@ -32,30 +32,28 @@ class HomeRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
     }
 
     fun fetchData(CNA: String): HomeResponse {
-
-
         val result: CAMSDB.User = jdbcTemplate.queryForObject(
             """
-                SELECT lastLoginTime, lastLoginIP
-                FROM user
-                WHERE CNA = ?
-                """.trimIndent(),
+            SELECT lastLoginTime, lastLoginIP
+            FROM user
+            WHERE CNA = ?
+            """.trimIndent(),
             rowMapper,
             CNA
-        ) ?: throw IllegalArgumentException("null")
+        ) ?: throw IllegalArgumentException("User not found")
 
         val result1: List<PC> = jdbcTemplate.query(
             """
-                SELECT deviceID, deviceName, price, orderDate, roomID, state, remark
-                FROM device
-                WHERE state = 'S'
-                """.trimIndent(),
+            SELECT deviceID, deviceName, price, orderDate, roomID, state, remark
+            FROM device
+            WHERE state = 'S'
+            """.trimIndent(),
             rowMapper1
         )
 
         return HomeResponse(
-            LastLoginTime = result.lastLoginTime!!.toString(),
-            LastLoginPlace = result.lastLoginIP!!,
+            LastLoginTime = result.lastLoginTime?.toString() ?: "Never logged in",
+            LastLoginPlace = result.lastLoginIP ?: "Unknown",
             PendingConfirmItem = result1
         )
     }
