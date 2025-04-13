@@ -273,7 +273,7 @@ WHERE deviceID = ?""".trimIndent(),
     LEFT JOIN User inspector ON c.inspector = inspector.CNA
     INNER JOIN Room r ON d.roomID = r.roomID
     INNER JOIN Campus camp ON r.campusID = camp.campusID
-    WHERE (? IS NULL OR u.CNA = ?)  -- Fixed column name and parameter
+    WHERE (? IS NULL OR ? = '' OR u.CNA = ?)  -- Fixed column name and parameter
       AND br.borrowDate >= ?
       AND (
         (? = TRUE AND rr.borrowRecordID IS NOT NULL) OR  -- Explicit boolean handling
@@ -284,6 +284,7 @@ WHERE deviceID = ?""".trimIndent(),
             // Execute query using JDBC or Exposed framework
             return@APIprocess jdbcTemplate.query(
                 query, arrayOf<Any?>( // Use arrayOf<Any?> to handle nulls
+                    targetCNA,
                     targetCNA,
                     targetCNA,
                     borrowDateAfter,

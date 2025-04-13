@@ -3,16 +3,10 @@ package com.fyp.crms_backend.service
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.Response
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.borrow.BorrowListRequest
-import com.fyp.crms_backend.dto.borrow.BorrowListResponse
-import com.fyp.crms_backend.dto.borrow.BorrowRequest
-import com.fyp.crms_backend.dto.borrow.CheckReturnRequest
-import com.fyp.crms_backend.dto.borrow.CheckReturnResponse
-import com.fyp.crms_backend.dto.borrow.RemandRequest
-import com.fyp.crms_backend.dto.borrow.RemandResponse
-import com.fyp.crms_backend.dto.borrow.ReservationRequest
+import com.fyp.crms_backend.dto.borrow.*
 import com.fyp.crms_backend.repository.BorrowRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -62,10 +56,16 @@ class BorrowService(
 
     fun getBorrowList(request: BorrowListRequest): Response {
         val data: Claims = decryptToken(request.token)
+
+
+        val targetCNA = when (Permission.fromLevel(data["accessLevel"].toString().toInt())) {
+            Permission.STUDENT -> data.subject.toString()
+            else -> request.targetCNA
+        }
         val results: List<BorrowListResponse.BorrowRecord> =
             borrowRepository.getBorrowList(
                 data.subject,
-                request.targetCNA,
+                targetCNA,
                 request.borrowDateAfter,
                 request.returned
             )
