@@ -673,7 +673,15 @@ where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.rfid = ?
 
     @Transactional
     fun updateDeviceLocation(deviceID: Int, roomID: Int) {
-        // Verify room exists
+        // 先檢查設備當前房間
+        val currentRoom = jdbcTemplate.queryForObject(
+            "SELECT roomID FROM Device WHERE deviceID = ?",
+            Int::class.java,
+            deviceID
+        )
+
+        // 如果房間相同直接返回，這裡改為在上層處理此邏輯
+        // 這裡保留原始房間狀態檢查
         val roomExists = jdbcTemplate.queryForObject(
             "SELECT COUNT(1) FROM Room WHERE roomID = ? AND state = 'A'",
             Int::class.java,
@@ -684,10 +692,17 @@ where d.state != 'D' and dr.state != 'D' and dp.state != 'D' and dr.rfid = ?
             throw IllegalStateException("Room not found or not available")
         }
 
-        // Update device location
         jdbcTemplate.update(
             "UPDATE Device SET roomID = ? WHERE deviceID = ?",
             roomID, deviceID
+        )
+    }
+
+    fun getDeviceCurrentRoom(deviceId: Int): Int? {
+        return jdbcTemplate.queryForObject(
+            "SELECT roomID FROM Device WHERE deviceID = ?",
+            Int::class.java,
+            deviceId
         )
     }
 }

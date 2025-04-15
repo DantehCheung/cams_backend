@@ -137,42 +137,83 @@ class ItemService(
         val data: Claims = decryptToken(request.token)
 
         val deviceParts = itemRepository.getDevicePartsByRFIDs(request.itemList)
-
         if (deviceParts.isEmpty()) {
             return updateLocationByRFIDResponse(emptyList())
         }
 
         val groupedByDevice = deviceParts.groupBy { it.deviceID }
-
         val updateLists = mutableListOf<updateLocationByRFIDResponse.updateList>()
 
         groupedByDevice.forEach { (deviceId, parts) ->
+            val deviceName = parts.first().deviceName
+            val currentRoomId = itemRepository.getDeviceCurrentRoom(deviceId)
 
-            val expectedParts = itemRepository.getExpectedPartsForDevice(deviceId)
-
-            if (parts.size == expectedParts.size) {
-                itemRepository.updateDeviceLocation(deviceId, request.roomID)
-                updateLists.add(
-                    updateLocationByRFIDResponse.updateList(
-                        deviceName = parts.first().deviceName,
-                        successData = updateLocationByRFIDResponse.SuccessData("All parts scanned, location updated")
-                    )
-                )
-            } else {
-                val missingParts = expectedParts.filter { expected ->
-                    parts.none { scanned -> scanned.devicePartID == expected.devicePartID }
-                }
-                updateLists.add(
-                    updateLocationByRFIDResponse.updateList(
-                        deviceName = parts.first().deviceName,
-                        failData = updateLocationByRFIDResponse.FailData(
-                            "Missing parts",
-                            "Missing parts: ${missingParts.joinToString { it.devicePartName }}"
+            when {
+                currentRoomId == request.roomID -> {
+                    updateLists.add(
+                        updateLocationByRFIDResponse.updateList(
+                            deviceName = deviceName,
+                            failData = updateLocationByRFIDResponse.FailData(
+                                something = "Room unchanged",
+                                reason = "Same room of the device"
+                            ),
+                            successData = null  // 明確指定 successData 為 null
                         )
                     )
-                )
+                }
+
+                else -> {
+                    val expectedParts = itemRepository.getExpectedPartsForDevice(deviceId)
+                    val requiredPartTypes = expectedParts.map { it.devicePartID }.toSet()
+                    val scannedPartTypes = parts.map { it.devicePartID }.toSet()
+
+                    if (scannedPartTypes.containsAll(requiredPartTypes)) {
+                        try {
+                            itemRepository.updateDeviceLocation(deviceId, request.roomID)
+                            updateLists.add(
+                                updateLocationByRFIDResponse.updateList(
+                                    deviceName = deviceName,
+                                    successData = updateLocationByRFIDResponse.SuccessData(
+                                        something = "Location updated to room ${request.roomID}"
+                                    ),
+                                    failData = null  // 明確指定 failData 為 null
+                                )
+                            )
+                        } catch (e: Exception) {
+                            updateLists.add(
+                                updateLocationByRFIDResponse.updateList(
+                                    deviceName = deviceName,
+                                    failData = updateLocationByRFIDResponse.FailData(
+                                        something = "Update failed",
+                                        reason = e.message ?: "Unknown error"
+                                    ),
+                                    successData = null
+                                )
+                            )
+                        }
+                    } else {
+                        val missingTypes = requiredPartTypes - scannedPartTypes
+                        val missingNames = expectedParts
+                            .filter { it.devicePartID in missingTypes }
+                            .map { it.devicePartName }
+                            .distinct()
+                            .joinToString()
+
+                        updateLists.add(
+                            updateLocationByRFIDResponse.updateList(
+                                deviceName = deviceName,
+                                failData = updateLocationByRFIDResponse.FailData(
+                                    something = "Missing parts",
+                                    reason = "Missing parts: $missingNames"
+                                ),
+                                successData = null  // 明確指定 successData 為 null
+                            )
+                        )
+                    }
+                }
             }
         }
+
 
         return updateLocationByRFIDResponse(updateLists)
     }
