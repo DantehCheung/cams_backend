@@ -18,7 +18,7 @@ data class GetItemResponse(
         val roomID: Int? = null,
         val state: Char? = null,
         val remark: String? = null,
-        val docs: List<DeviceDoc>,
+        val docs: List<DeviceDoc>? = null,
         val partID: List<DevicePartID>,
         val deviceRFID: List<DeviceRFID>,
     )

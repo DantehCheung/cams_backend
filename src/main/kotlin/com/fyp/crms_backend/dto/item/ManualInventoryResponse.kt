@@ -7,6 +7,7 @@ data class ManualInventoryResponse(
 ) : Response {
     data class InventoryItem(
         val deviceName: String,
+        val devicePartName: String,
         val RFID: String,
         val preState: Char,
         val afterState: Char

@@ -2,22 +2,7 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.item.AddItemRequest
-import com.fyp.crms_backend.dto.item.AddRfidRequest
-import com.fyp.crms_backend.dto.item.DeleteDocRequest
-import com.fyp.crms_backend.dto.item.DeleteItemRequest
-import com.fyp.crms_backend.dto.item.DeleteRfidRequest
-import com.fyp.crms_backend.dto.item.DeviceIdResponse
-import com.fyp.crms_backend.dto.item.EditItemPartRequest
-import com.fyp.crms_backend.dto.item.EditItemRequest
-import com.fyp.crms_backend.dto.item.GetItemByRFIDRequest
-import com.fyp.crms_backend.dto.item.GetItemByRFIDResponse
-import com.fyp.crms_backend.dto.item.GetItemRequest
-import com.fyp.crms_backend.dto.item.GetItemResponse
-import com.fyp.crms_backend.dto.item.ManualInventoryRequest
-import com.fyp.crms_backend.dto.item.ManualInventoryResponse
-import com.fyp.crms_backend.dto.item.updateLocationByRFIDRequest
-import com.fyp.crms_backend.dto.item.updateLocationByRFIDResponse
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
 import io.jsonwebtoken.Claims
@@ -192,60 +177,75 @@ class ItemService(
         return updateLocationByRFIDResponse(updateLists)
     }
 
-    //Manual adjust item
     fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
         val scannedRFIDs = request.manualInventoryLists.distinct()
         val data: Claims = decryptToken(request.token)
 
+        // Get initial states (for scanned RFIDs)
         val initialStates = itemRepository.getDeviceStatesByRFIDs(
             request.roomID,
             scannedRFIDs
         )
 
+        // Retrieve all device records for the room.
         val allDevices = itemRepository.getRoomRFIDInfo(request.roomID)
 
-        val updates = allDevices.associate { device ->
-            val newState = when {
-                device.RFID in scannedRFIDs -> when (device.currentState) {
-                    'L', 'M' -> 'A'  // 扫描到的L/M状态转A
-                    else -> device.currentState
-                }
+        // Group devices by deviceID to compute updates for the whole device.
+        val updates: Map<Int, Char> = allDevices.groupBy { it.deviceID }
+            .mapValues { (_, deviceParts) ->
+                // Use the first record’s state as representative for the whole device
+                val currentState = deviceParts.first().currentState
 
-                else -> when (device.currentState) {
-                    in listOf('A', 'S') -> 'M'  // 未扫描的A/S转M
-                    else -> device.currentState
+                // For every part (grouped by devicePartID), confirm that at least one RFID was scanned.
+                val allPartsScanned = deviceParts
+                    .groupBy { it.devicePartID }
+                    .all { (_, partEntries) ->
+                        partEntries.any { it.RFID in scannedRFIDs }
+                    }
+
+                // Update rule:
+                // • If state is one of 'M', 'E', 'W', 'S' and every part is scanned -> update to 'A'
+                // • If state is 'A' but not all parts are scanned -> revert to 'M'
+                when {
+                    currentState in listOf('M', 'E', 'W', 'S') && allPartsScanned -> 'A'
+                    currentState == 'A' && !allPartsScanned -> 'M'
+                    else -> currentState
                 }
             }
-            device.deviceID to newState
 
-        }
-
+        // Execute the batch update. This returns a mapping from deviceID to the updated state.
         val updatedStates = itemRepository.batchUpdateDeviceStates(updates)
 
-        val unscanned = allDevices.filterNot { it.RFID in scannedRFIDs }
-
-
-        return ManualInventoryResponse(
-            (initialStates.map { device ->
+        // Now, group by (deviceID, devicePartID) to get distinct device parts.
+        // Then build the inventory record swapping the devicePartName and RFID values.
+        val inventoryItems = allDevices
+            .groupBy { it.deviceID to it.devicePartID }
+            .map { (_, parts) ->
+                val record = parts.first() // representative for the device part group
                 ManualInventoryResponse.InventoryItem(
-                    device.deviceName,
-                    device.RFID,
-                    device.currentState,
-                    updatedStates[device.deviceID] ?: 'E'
+                    deviceName = record.deviceName,
+                    // Swap the fields: use the original RFID as the devicePartName and vice versa.
+                    devicePartName = record.devicePartName,
+                    RFID = record.RFID,
+                    preState = record.currentState,
+                    afterState = updatedStates[record.deviceID] ?: if (record.currentState in listOf(
+                            'A',
+                            'S',
+                            'R'
+                        )
+                    ) 'M' else record.currentState
                 )
-            } + unscanned.map { device ->
-                ManualInventoryResponse.InventoryItem(
-                    device.deviceName,
-                    device.RFID,
-                    device.currentState,
-                    if (device.currentState in listOf('A', 'S', 'R')) 'M' else device.currentState
-                )
-            }).sortedWith(
-                compareByDescending<ManualInventoryResponse.InventoryItem> { it.RFID in scannedRFIDs }
+            }
+            .sortedWith(
+                // For instance, put parts whose (now swapped) devicePartName (originally RFID)
+                // is in the scanned list first, then sort by afterState.
+                compareByDescending<ManualInventoryResponse.InventoryItem> { it.devicePartName in scannedRFIDs }
                     .thenBy { it.afterState }
             )
-        )
+
+        return ManualInventoryResponse(inventoryItems)
     }
+
 
     fun getItemByRFID(request: GetItemByRFIDRequest): GetItemByRFIDResponse {
         val data: Claims = decryptToken(request.token)

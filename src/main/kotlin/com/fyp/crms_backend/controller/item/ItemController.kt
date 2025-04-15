@@ -2,17 +2,7 @@ package com.fyp.crms_backend.controller.item
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.item.AddItemRequest
-import com.fyp.crms_backend.dto.item.AddRfidRequest
-import com.fyp.crms_backend.dto.item.DeleteDocRequest
-import com.fyp.crms_backend.dto.item.DeleteItemRequest
-import com.fyp.crms_backend.dto.item.DeleteRfidRequest
-import com.fyp.crms_backend.dto.item.EditItemPartRequest
-import com.fyp.crms_backend.dto.item.EditItemRequest
-import com.fyp.crms_backend.dto.item.GetItemByRFIDRequest
-import com.fyp.crms_backend.dto.item.GetItemRequest
-import com.fyp.crms_backend.dto.item.ManualInventoryRequest
-import com.fyp.crms_backend.dto.item.updateLocationByRFIDRequest
+import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.service.ItemService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -116,6 +106,7 @@ class ItemController(private val itemService: ItemService) : ApiController() {
         @RequestBody request: ManualInventoryRequest
     ): Response {
         return process(request) {
+            print(request)
             return@process itemService.processManualInventory(request)
         }
     }

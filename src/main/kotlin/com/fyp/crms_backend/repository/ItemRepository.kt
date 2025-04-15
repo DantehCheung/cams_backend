@@ -501,18 +501,21 @@ WHERE roomID = ?
     data class DeviceStateInfo(
         val deviceID: Int,
         val deviceName: String,
+        val devicePartID: Int,
+        val devicePartName: String,
         val currentState: Char,
         val RFID: String
     )
 
     fun getDeviceStatesByRFIDs(roomID: Int, rfids: List<String>): List<DeviceStateInfo> {
         val sql = """
-        SELECT d.deviceID, d.deviceName, d.state, dr.RFID
+        SELECT d.deviceID, d.deviceName,dp.DevicePartID,dp.DevicePartName, d.state, dr.RFID
         FROM Device d
-        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
+        join devicePart dp on d.deviceID = dp.deviceID
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID and dr.devicePartID = dp.devicePartID
         WHERE d.roomID = ? 
           AND dr.RFID IN (${rfids.joinToString { "?" }})
-          AND d.state != 'D'
+          AND d.state != 'D' and d.state in ('A','L','M','S','E','W')
     """
 
         // Prepare the arguments: roomID first, followed by the RFIDs
@@ -523,6 +526,8 @@ WHERE roomID = ?
             DeviceStateInfo(
                 deviceID = rs.getInt("deviceID"),
                 deviceName = rs.getString("deviceName"),
+                devicePartID = rs.getInt("DevicePartID"),
+                devicePartName = rs.getString("devicePartName"),
                 currentState = rs.getString("state").first(),
                 RFID = rs.getString("RFID")
             )
@@ -540,7 +545,8 @@ WHERE roomID = ?
                 newState.toString(),
                 deviceID
             )
-
+            //print update info
+            print(updates)
 
             val afterState = jdbcTemplate.queryForObject(
                 "SELECT state FROM Device WHERE deviceID = ?",
@@ -556,17 +562,21 @@ WHERE roomID = ?
 
     fun getRoomRFIDInfo(roomID: Int): List<DeviceStateInfo> {
         val sql = """
-        SELECT d.deviceID, d.deviceName, d.state, dr.RFID
+        SELECT d.deviceID, d.deviceName,dp.DevicePartID,dp.DevicePartName, d.state, dr.RFID
         FROM Device d
-        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID
+        join devicePart dp on d.deviceID = dp.deviceID
+        JOIN DeviceRFID dr ON d.deviceID = dr.deviceID and dr.devicePartID = dp.devicePartID
         WHERE d.roomID = ? 
           AND d.state != 'D'
-          AND dr.state = 'A'
+          and dp.state != 'D'
+          AND dr.state != 'D'
     """
         return jdbcTemplate.query(sql, arrayOf(roomID)) { rs, _ ->
             DeviceStateInfo(
                 rs.getInt("deviceID"),
                 rs.getString("deviceName"),
+                rs.getInt("DevicePartID"),
+                rs.getString("devicePartName"),
                 rs.getString("state").first(),
                 rs.getString("RFID")
             )
