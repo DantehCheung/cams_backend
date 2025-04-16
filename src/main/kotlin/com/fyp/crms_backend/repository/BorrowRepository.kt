@@ -222,17 +222,21 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
             }
             returnList.map { itemID ->
                 if (!checkReturnAvailable(itemID)) {
-                    return@APIprocess false
+                    return@map RemandResponse.deviceResult(
+                        itemID = itemID,
+                        state = false
+                    ) // Simply return the default state
                 }
+
                 val result: Int = jdbcTemplate.update(
                     """INSERT INTO devicereturnrecord (borrowRecordID)
-SELECT borrowRecordID
-FROM deviceborrowrecord
-WHERE deviceID = ?""".trimIndent(),
+        SELECT borrowRecordID
+        FROM deviceborrowrecord
+        WHERE deviceID = ?""".trimIndent(),
                     itemID
                 )
-                stateList.find { it.itemID == itemID }?.state = result > 0
 
+                stateList.find { it.itemID == itemID }?.state = result > 0
             }
             return@APIprocess stateList
         } as List<RemandResponse.deviceResult>
@@ -384,6 +388,7 @@ WHERE deviceID = ?""".trimIndent(),
         return keyHolder.key?.toInt() ?: throw IllegalStateException("獲取檢查記錄 ID 失敗")
     }
 
+    @Transactional
     private fun updateDeviceReturnRecords(
         deviceIds: Set<Int>,
         checkRecordId: Int
@@ -397,6 +402,12 @@ WHERE deviceID = ?""".trimIndent(),
             WHERE dbr.deviceID = ?
             AND drr.checkRecordID IS NULL
         """.trimIndent(), checkRecordId, deviceId
+            )
+            jdbcTemplate.update(
+                """UPDATE device
+                    SET state = 'A'
+                    WHERE deviceID = ?""".trimIndent(),
+                deviceId
             )
         }
     }
