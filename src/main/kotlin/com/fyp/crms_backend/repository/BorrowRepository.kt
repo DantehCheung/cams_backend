@@ -389,7 +389,7 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
     }
 
     @Transactional
-    private fun updateDeviceReturnRecords(
+    fun updateDeviceReturnRecords(
         deviceIds: Set<Int>,
         checkRecordId: Int
     ) {
