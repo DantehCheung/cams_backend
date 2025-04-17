@@ -1,12 +1,7 @@
 package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.algorithm.Snowflake
-import com.fyp.crms_backend.dto.report.DeviceBorrowHistoryRequest
-import com.fyp.crms_backend.dto.report.DeviceBorrowHistoryResponse
-import com.fyp.crms_backend.dto.report.DeviceStatusReportRequest
-import com.fyp.crms_backend.dto.report.DeviceStatusReportResponse
-import com.fyp.crms_backend.dto.report.OverdueDevicesRequest
-import com.fyp.crms_backend.dto.report.OverdueDevicesResponse
+import com.fyp.crms_backend.dto.report.*
 import com.fyp.crms_backend.repository.ReportRepository
 import com.fyp.crms_backend.utils.JWT
 import com.fyp.crms_backend.utils.Permission

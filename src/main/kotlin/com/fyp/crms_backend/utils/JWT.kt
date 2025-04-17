@@ -5,7 +5,7 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import org.springframework.stereotype.Component
-import java.util.Date
+import java.util.*
 
 @Component
 class JWT(private val sKey: SKey) {
@@ -33,8 +33,8 @@ class JWT(private val sKey: SKey) {
             .setSubject(user.CNA)
             .claim("accessLevel", user.accessLevel)
             .setIssuedAt(Date())
-            .setExpiration(Date(System.currentTimeMillis() + 999999999))
-            //.setExpiration(Date(System.currentTimeMillis() + 300000)) // 5 mins
+            //.setExpiration(Date(System.currentTimeMillis() + 999999999))
+            .setExpiration(Date(System.currentTimeMillis() + 300000)) // 5 mins
             .signWith(SignatureAlgorithm.HS256, sKey.secretKey) //
             .compact()
     }
@@ -44,8 +44,8 @@ class JWT(private val sKey: SKey) {
             .setSubject(user.CNA)
             .claim("salt", user.salt)
             .setIssuedAt(Date())
-            .setExpiration(Date(System.currentTimeMillis() + 9999999999))
-            //.setExpiration(Date(System.currentTimeMillis() + 604800000)) // 7 days
+            //.setExpiration(Date(System.currentTimeMillis() + 9999999999))
+            .setExpiration(Date(System.currentTimeMillis() + 604800000)) // 7 days
             .signWith(SignatureAlgorithm.HS256, sKey.secretKey)
             .compact()
     }

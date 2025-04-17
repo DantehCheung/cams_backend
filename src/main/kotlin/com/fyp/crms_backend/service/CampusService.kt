@@ -3,13 +3,7 @@ package com.fyp.crms_backend.service
 
 import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.StateResponse
-import com.fyp.crms_backend.dto.campus.AddCampusRequest
-import com.fyp.crms_backend.dto.campus.AddCampusResponse
-import com.fyp.crms_backend.dto.campus.DeleteCampusRequest
-import com.fyp.crms_backend.dto.campus.EditCampusRequest
-import com.fyp.crms_backend.dto.campus.EditCampusResponse
-import com.fyp.crms_backend.dto.campus.GetCampusRequest
-import com.fyp.crms_backend.dto.campus.GetCampusResponse
+import com.fyp.crms_backend.dto.campus.*
 import com.fyp.crms_backend.repository.CampusRepository
 import com.fyp.crms_backend.utils.JWT
 import com.fyp.crms_backend.utils.Permission

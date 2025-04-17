@@ -2,11 +2,7 @@ package com.fyp.crms_backend.controller.borrow
 
 import com.fyp.crms_backend.controller.ApiController
 import com.fyp.crms_backend.dto.Response
-import com.fyp.crms_backend.dto.borrow.BorrowListRequest
-import com.fyp.crms_backend.dto.borrow.BorrowRequest
-import com.fyp.crms_backend.dto.borrow.CheckReturnRequest
-import com.fyp.crms_backend.dto.borrow.RemandRequest
-import com.fyp.crms_backend.dto.borrow.ReservationRequest
+import com.fyp.crms_backend.dto.borrow.*
 import com.fyp.crms_backend.service.BorrowService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
