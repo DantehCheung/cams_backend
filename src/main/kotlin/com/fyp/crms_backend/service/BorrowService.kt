@@ -20,7 +20,7 @@ class BorrowService(
 ) : ApiService(jwt, jdbcTemplate, snowflake) {
 
     fun reservation(request: ReservationRequest): Response {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.STUDENT, Permission.TEACHER))
 
         val result: Boolean = borrowRepository.reservation(
             data.subject,
@@ -34,7 +34,7 @@ class BorrowService(
     }
 
     fun borrow(request: BorrowRequest): Response {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.STUDENT, Permission.TEACHER))
 
         val result: Boolean = borrowRepository.borrow(data.subject, request.itemID, request.endDate)
         return StateResponse(
@@ -44,7 +44,7 @@ class BorrowService(
 
 
     fun remand(request: RemandRequest): Response {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.STUDENT, Permission.TEACHER))
         val results: List<RemandResponse.deviceResult> =
             borrowRepository.remand(data.subject, request.returnList)
 
@@ -76,7 +76,7 @@ class BorrowService(
     }
 
     fun checkReturn(request: CheckReturnRequest): Response {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.TEACHER))
         val response: CheckReturnResponse =
             borrowRepository.checkReturn(data.subject, request.RFIDList)
 

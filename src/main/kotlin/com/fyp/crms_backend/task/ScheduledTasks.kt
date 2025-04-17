@@ -35,7 +35,7 @@ class ScheduledTasks(
             """
 SELECT 
   u.CNA,
-  CONCAT(u.firstName, ' ', u.lastName) AS fullName,
+  CONCAT(u.lastName, ' ', u.firstName) AS fullName,
   GROUP_CONCAT(d.deviceID SEPARATOR ',') AS deviceIDs,
   GROUP_CONCAT(d.deviceName SEPARATOR '|') AS deviceNames,
   MAX(br.leasePeriod) AS latestLease,

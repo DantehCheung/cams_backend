@@ -5,6 +5,7 @@ import com.fyp.crms_backend.dto.StateResponse
 import com.fyp.crms_backend.dto.item.*
 import com.fyp.crms_backend.repository.ItemRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -32,7 +33,7 @@ class ItemService(
     // Add Item
     fun addItem(request: AddItemRequest): DeviceIdResponse {
 
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val deviceID = itemRepository.addItem(data.subject, request.device, request.deviceParts)
 
@@ -45,7 +46,7 @@ class ItemService(
     // Delete Item
     fun deleteItem(request: DeleteItemRequest): StateResponse {
 
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val result: Boolean = itemRepository.deleteItem(data.subject, request.deviceID)
 
@@ -58,7 +59,7 @@ class ItemService(
 
     fun editItem(request: EditItemRequest): StateResponse {
         // The token in EditItemRequest is used as CNA.
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val repo: Boolean = itemRepository.editItem(
             data.subject,
@@ -80,7 +81,7 @@ class ItemService(
 
     // Add RFID
     fun addRFID(request: AddRfidRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val repo: Boolean = itemRepository.addSingleRFID(
             data.subject, request.RFID, request.deviceID, request.partID
@@ -93,7 +94,7 @@ class ItemService(
 
     // delete RFID
     fun deleteRFID(request: DeleteRfidRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val repo: Boolean = itemRepository.deleteSingleRFID(
             data.subject, request.RFID, request.deviceID, request.partID
@@ -106,7 +107,7 @@ class ItemService(
 
     // delete Doc
     fun deleteDoc(request: DeleteDocRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val repo: Boolean = itemRepository.deleteSingleDoc(
             data.subject, request.deviceID, request.partID, request.docPath
@@ -120,7 +121,7 @@ class ItemService(
     // Edit Item Part
     fun editItemPart(request: EditItemPartRequest): StateResponse {
 
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val repo: Boolean = itemRepository.editItemPart(
             data.subject, request.deviceID, request.partID, request.partName, request.state
@@ -134,7 +135,7 @@ class ItemService(
 
     //Update Item Location Service
     fun updateItemLocation(request: updateLocationByRFIDRequest): updateLocationByRFIDResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val deviceParts = itemRepository.getDevicePartsByRFIDs(request.itemList)
         if (deviceParts.isEmpty()) {
@@ -220,7 +221,7 @@ class ItemService(
 
     fun processManualInventory(request: ManualInventoryRequest): ManualInventoryResponse {
         val scannedRFIDs = request.manualInventoryLists.distinct()
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         // Get initial states (for scanned RFIDs)
         val initialStates = itemRepository.getDeviceStatesByRFIDs(

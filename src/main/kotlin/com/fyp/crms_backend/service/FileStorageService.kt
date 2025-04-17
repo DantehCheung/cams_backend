@@ -57,7 +57,8 @@ class FileStorageService(
         return newName
     }
 
-    fun storeFile(CNA: String, deviceId: Int, file: MultipartFile): String {
+    fun storeFile(token: String, deviceId: Int, file: MultipartFile): String {
+        val data = decryptToken(token)
         if (!deviceRepository.existsById(deviceId)) {
             throw FileStorageException("Device $deviceId not found")
         }
@@ -74,7 +75,7 @@ class FileStorageService(
                     StandardCopyOption.REPLACE_EXISTING
                 )
             }
-            addLog(CNA, "File $fileName uploaded to device $deviceId")
+            addLog(data.subject, "File $fileName uploaded to device $deviceId")
         } catch (ex: IOException) {
             throw FileStorageException("Could not store file $fileName", ex)
         }

@@ -51,6 +51,16 @@ abstract class ApiService(
         }
     }
 
+    protected fun decryptToken(token: String,permission: Permission):Claims{
+        return handleTokenValidation(token) { claims ->
+            val accessLevel = claims.getAccessLevel()
+            if (accessLevel != permission.level) {
+                addLog("E03: Required permissions: ${permission.displayName}, Actual level: $accessLevel")
+                throw errorProcess("E03")
+            }
+        }
+    }
+
     private inline fun handleTokenValidation(
         token: String,
         validation: (Claims) -> Unit

@@ -13,6 +13,7 @@ import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.repository.UserRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -90,7 +91,7 @@ class UserService(
 
     // ADD USER
     fun addUser(request: AddUserRequest): StateResponse {
-        val data: Claims = decryptToken(request.token) // decrypt token
+        val data: Claims = decryptToken(request.token, Permission.ADMIN) // decrypt token
         val status: Boolean = userRepository.addUsers(
             data.subject,
             request.userList

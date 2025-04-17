@@ -10,6 +10,7 @@ import com.fyp.crms_backend.dto.room.GetRoomResponse
 import com.fyp.crms_backend.dto.room.NewRoomRequest
 import com.fyp.crms_backend.repository.RoomRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -44,7 +45,7 @@ class RoomService(
 
     fun addRoom(request: AddRoomRequest): StateResponse {
 
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val result: Boolean = roomRepository.addRoom(
             data.subject,
@@ -62,7 +63,7 @@ class RoomService(
     // Edit Room
     fun editRoom(request: EditRoomRequest): StateResponse {
 
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val result: Boolean = roomRepository.editRoom(
             data.subject,
@@ -80,7 +81,7 @@ class RoomService(
 
     // Delete Room
     fun deleteRoom(request: DeleteRoomRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val result: Boolean = roomRepository.deleteRoom(data.subject, request.roomID)
 
@@ -90,7 +91,7 @@ class RoomService(
     }
 
     fun newRoom(request: NewRoomRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val result: Boolean = roomRepository.newRoom(data.subject, request.roomID, request.roomRFID)
 

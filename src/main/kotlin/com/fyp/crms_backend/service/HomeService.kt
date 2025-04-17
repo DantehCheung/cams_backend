@@ -5,6 +5,7 @@ import com.fyp.crms_backend.dto.home.HomeRequest
 import com.fyp.crms_backend.dto.home.HomeResponse
 import com.fyp.crms_backend.repository.HomeRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -18,7 +19,7 @@ class HomeService(
 
     fun execute(request: HomeRequest): HomeResponse {
 
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
 
         val repo = homeRepository.fetchData(data.subject)
 

@@ -12,6 +12,7 @@ import com.fyp.crms_backend.dto.campus.GetCampusRequest
 import com.fyp.crms_backend.dto.campus.GetCampusResponse
 import com.fyp.crms_backend.repository.CampusRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -48,7 +49,7 @@ class CampusService(
 
     fun add(request: AddCampusRequest): AddCampusResponse {
 
-        val data: Claims = decryptToken(request.token) // decrypt the token and get the CNA
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER)) // decrypt the token and get the CNA
 
         val result: String = campusRepository.addData(
             data.subject,
@@ -65,7 +66,7 @@ class CampusService(
 
     fun edit(request: EditCampusRequest): EditCampusResponse {
 
-        val data: Claims = decryptToken(request.token) // decrypt the token and get the CNA
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER)) // decrypt the token and get the CNA
 
         val result: String = campusRepository.editData(
             data.subject,
@@ -82,7 +83,7 @@ class CampusService(
 
     // Delete Campus
     fun delete(request: DeleteCampusRequest): StateResponse {
-        val data: Claims = decryptToken(request.token) // decrypt the token and get the CNA
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER)) // decrypt the token and get the CNA
 
         val result: Boolean = campusRepository.deleteData(data.subject, request.campusID)
 

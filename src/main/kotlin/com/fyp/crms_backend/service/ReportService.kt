@@ -9,6 +9,7 @@ import com.fyp.crms_backend.dto.report.OverdueDevicesRequest
 import com.fyp.crms_backend.dto.report.OverdueDevicesResponse
 import com.fyp.crms_backend.repository.ReportRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -41,7 +42,7 @@ class ReportService(
     }
 
     fun getDeviceStatusReport(request: DeviceStatusReportRequest): DeviceStatusReportResponse {
-        val claims = decryptToken(request.token)
+        val claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
         validateAccess(claims)
 
         return DeviceStatusReportResponse(

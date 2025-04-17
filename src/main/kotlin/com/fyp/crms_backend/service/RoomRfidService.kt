@@ -9,6 +9,7 @@ import com.fyp.crms_backend.dto.roomRfid.EditRoomRFIDRequest
 import com.fyp.crms_backend.dto.roomRfid.GetRoomByRFIDRequest
 import com.fyp.crms_backend.repository.RoomRFIDRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -21,13 +22,13 @@ class RoomRfidService(
 ) : ApiService(jwt, jdbcTemplate, snowflake) {
 
     fun add(request: AddRoomRFIDRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
         val result = roomRFIDRepository.add(data.subject, request.roomID, request.RFID)
         return StateResponse(result)
     }
 
     fun edit(request: EditRoomRFIDRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
         val result = roomRFIDRepository.edit(
             data.subject,
             request.RFID,
@@ -38,7 +39,7 @@ class RoomRfidService(
     }
 
     fun delete(request: DeleteRoomRFIDRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token, listOf(Permission.ADMIN,Permission.TEACHER))
         val result = roomRFIDRepository.delete(data.subject, request.RFID)
         return StateResponse(result)
     }

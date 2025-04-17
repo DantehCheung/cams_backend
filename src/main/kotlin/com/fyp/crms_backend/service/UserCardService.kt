@@ -7,6 +7,7 @@ import com.fyp.crms_backend.dto.userCard.DeleteUserCardRequest
 import com.fyp.crms_backend.dto.userCard.EditUserCardRequest
 import com.fyp.crms_backend.repository.UserCardRepository
 import com.fyp.crms_backend.utils.JWT
+import com.fyp.crms_backend.utils.Permission
 import io.jsonwebtoken.Claims
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Service
@@ -19,13 +20,13 @@ class UserCardService(
 ) : ApiService(jwt, jdbcTemplate, snowflake) {
 
     fun add(request: AddUserCardRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token,Permission.ADMIN)
         val result = userCardRepository.add(data.subject, request.CardID, request.CNA)
         return StateResponse(result)
     }
 
     fun edit(request: EditUserCardRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token,Permission.ADMIN)
         val result = userCardRepository.edit(
             data.subject,
             request.CardID,
@@ -36,7 +37,7 @@ class UserCardService(
     }
 
     fun delete(request: DeleteUserCardRequest): StateResponse {
-        val data: Claims = decryptToken(request.token)
+        val data: Claims = decryptToken(request.token,Permission.ADMIN)
         val result = userCardRepository.delete(data.subject, request.CardID)
         return StateResponse(result)
     }
