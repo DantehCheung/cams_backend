@@ -4,6 +4,7 @@ import com.fyp.crms_backend.algorithm.Snowflake
 import com.fyp.crms_backend.dto.user.AddUserRequest
 import com.fyp.crms_backend.entity.CAMSDB
 import com.fyp.crms_backend.utils.AccessPagePermission.Companion.defaultAccessPage
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.queryForObject
@@ -129,6 +130,7 @@ class UserRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
     fun renewToken(CNA: String, salt: String, ipAddress: String): CAMSDB.User? {
         return super.APIprocess(CNA, "renew token in ip $ipAddress") {
             var user: CAMSDB.User? = null
+            try {
             user = jdbcTemplate.queryForObject(
                 """SELECT * FROM user where CNA = ? and lastLoginIP = ? and salt = ? and password like '0%'""",
                 arrayOf(CNA, ipAddress, salt)
@@ -148,6 +150,9 @@ class UserRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
                     lastLoginIP = rs.getString("lastLoginIP"),
                     loginFail = rs.getInt("loginFail")
                 )
+            }
+            } catch (e: EmptyResultDataAccessException) {
+                throw IllegalArgumentException("renew Token failed")
             }
             return@APIprocess user
         } as CAMSDB.User?
