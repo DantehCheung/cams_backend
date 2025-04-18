@@ -57,4 +57,46 @@ class AppDownloadController(
                 .body(FileSystemResource(file))
         }
     }
+
+    @GetMapping("/download/android")
+    fun downloadAndroidFile(
+        @RequestParam(name = "auto", defaultValue = "false") autoDownload: Boolean,
+        request: HttpServletRequest
+    ): ResponseEntity<Any> {
+
+        val fileName = "CAMS_android.apk"
+        val file = File("${fileStorageProperties.appdir}${File.separator}$fileName")
+
+        // 检测是否为浏览器请求
+        val isBrowser = request.getHeader("User-Agent")?.contains("Mozilla") ?: false
+
+        return if (isBrowser && !autoDownload) {
+            // 显示下载消息并触发自动下载
+            ResponseEntity.ok()
+                .contentType(MediaType.TEXT_HTML)
+                .body(
+                    """
+                <html>
+                    <body>
+                        <script>
+                            setTimeout(function() {
+                                window.location.href = window.location.href + "?auto=true";
+                            }, 300);
+                        </script>
+                        <h2>The file is downloading...</h2>
+                    </body>
+                </html>
+                """.trimIndent()
+                )
+        } else {
+            // 返回文件，如果文件不存在则返回 404
+            if (!file.exists()) return ResponseEntity.notFound().build()
+
+            ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"$fileName\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(FileSystemResource(file))
+        }
+    }
+
 }
