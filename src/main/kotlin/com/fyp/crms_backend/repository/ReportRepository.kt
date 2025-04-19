@@ -112,8 +112,15 @@ class ReportRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
                 deviceID = rs.getInt("deviceID"),
                 deviceName = rs.getString("deviceName"),
                 status = when (rs.getString("state")) {
+                    "S" -> "Shipping"
                     "A" -> "Available"
+                    "R" -> "Reserved"
                     "L" -> "On Loan"
+                    "E" -> "Expired"
+                    "B" -> "Broken"
+                    "W" -> "Waiting Repair"
+                    "D" -> "Destroyed"
+                    "M" -> "Missing"
                     else -> rs.getString("state")
                 },
                 location = rs.getString("location"),
