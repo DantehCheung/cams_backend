@@ -101,7 +101,7 @@ abstract class ApiRepository(
         } catch (e: DuplicateKeyException) {
             println(e.message)
             addErrorLog(CNA, logMsg, e)
-            throw errorProcess("E02") // Duplicate key error
+            throw errorProcess("E11") // Duplicate key error
         } catch (e: Exception) {
             println(e.message)
             addErrorLog(CNA, logMsg, e)
