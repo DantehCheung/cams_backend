@@ -229,10 +229,11 @@ class BorrowRepository(jdbcTemplate: JdbcTemplate, snowflake: Snowflake) :
                 }
 
                 val result: Int = jdbcTemplate.update(
-                    """INSERT INTO devicereturnrecord (borrowRecordID)
-        SELECT borrowRecordID
-        FROM deviceborrowrecord
-        WHERE deviceID = ?""".trimIndent(),
+                    """INSERT INTO DeviceReturnRecord (borrowRecordID)
+SELECT borrowRecordID
+FROM DeviceBorrowRecord
+WHERE deviceID = ? 
+  AND borrowRecordID NOT IN (SELECT borrowRecordID FROM DeviceReturnRecord);""".trimIndent(),
                     itemID
                 )
 
